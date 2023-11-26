@@ -1,9 +1,14 @@
 var camera, scene, renderer, controls;
 var group;
+var prismMesh;
+var currentCalendar; // Store a reference to the current calendar
 
 // Load the font
 var fontLoader = new THREE.FontLoader();
 var font;
+
+var currentMonth = 10;
+var currentYear = 2023
 
 // The path should point to the location of helvetiker_regular.typeface.json in your project
 fontLoader.load('./js/font/helvetiker_regular.typeface.json', function (loadedFont) {
@@ -65,8 +70,6 @@ function addObjects() {
         visible: false
     });
 
-
-
     // Assign UV coordinates to the geometry for proper texture mapping
     geometryPrism.faceVertexUvs[0] = [];
     geometryPrism.faceVertexUvs[0].push([
@@ -81,17 +84,9 @@ function addObjects() {
     prismMesh.rotation.x = -Math.PI / 2;
     group.add(prismMesh);
 
-
-
-
-
-    var calendar = createMonthlyCalendar(2008,1 );
-    positionCalendarOnFace(calendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
-    group.add(calendar);
-
-
-
-
+    currentCalendar = createMonthlyCalendar(currentYear, currentMonth );
+    positionCalendarOnFace(currentCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
+    group.add(currentCalendar);
 
     // Add the group to the scene
     scene.add(group);
@@ -135,29 +130,20 @@ function createDayCube(x, y, z, day) {
     return cube;
 }
 
-// Function to create a monthly calendar
-// Function to create a monthly calendar with day names
-// Function to create a monthly calendar with day names
-// Function to create a monthly calendar with day names
 // Function to create a monthly calendar with day names
 function createMonthlyCalendar(year, month) {
     var calendar = new THREE.Object3D(); // Kontejner pro komponenty kalendáře
 
-    // Výpočet počtu dnů v daném měsíci
     var daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    // Dny v týdnu
     var daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-    // Zjistění, který den v týdnu začíná měsíc
     var firstDayOfMonth = new Date(year, month, 0).getDay();
     console.log("firstDayOfMonth")
     console.log(firstDayOfMonth)
 
-    // // Přeorganizování pořadí dnů v týdnu, aby pondělí bylo první
      var rearrangedDaysOfWeek = daysOfWeek.slice(0).concat(daysOfWeek.slice(0, 0));
 
-    // Název měsíce a roku
     var monthYearText = getMonthName(month) + ' ' + year;
     var monthYearGeometry = new THREE.TextGeometry(monthYearText, {
         font: font,
@@ -169,7 +155,6 @@ function createMonthlyCalendar(year, month) {
     monthYearMesh.position.set(0.5, 0.5, 0.05);
     calendar.add(monthYearMesh);
 
-    // Vytvoření prvního řádku s názvy dní
     for (var col = 0; col < 7; col++) {
         var textGeometry = new THREE.TextGeometry(rearrangedDaysOfWeek[col], {
             font: font,
@@ -183,20 +168,19 @@ function createMonthlyCalendar(year, month) {
         calendar.add(textMesh);
     }
 
-    // Vytvoření druhého řádku s čísly dnů
     for (var day = 1; day <= daysInMonth; day++) {
-        var row = Math.floor((day - 1 + firstDayOfMonth) / 7); // Předpokládáme 7denní týden
+        var row = Math.floor((day - 1 + firstDayOfMonth) / 7);
         var col = (day - 1 + firstDayOfMonth) % 7;
 
         var cube = createDayCube(col * 0.3, -row * 0.3, 0.07, day);
         calendar.add(cube);
     }
+
+    createClickableCircle(1);
+    createClickableCircle(0);
     return calendar;
 }
 
-
-
-// Funkce pro získání názvu měsíce
 function getMonthName(month) {
     var months = [
         'January', 'February', 'March', 'April', 'May', 'June',
@@ -205,9 +189,120 @@ function getMonthName(month) {
     return months[month];
 }
 
+// Create an array to store the created balls
+var balls = [];
+
+// Set up raycasting for mouse picking
+var raycaster = new THREE.Raycaster();
+var mouse = new THREE.Vector2();
+
+// Register global click event listener
+window.addEventListener('click', function () {
+    // Perform raycasting on click
+    raycaster.setFromCamera(mouse, camera);
+    var intersects = raycaster.intersectObjects(balls, true);
+
+    if (intersects.length > 0) {
+        var ball = intersects[0].object;
+        if (ball.userData.isClickEnabled) {
+            ball.userData.isClickEnabled = false;
+            setTimeout(function () {
+                ball.userData.isClickEnabled = true;
+            }, 500); // Set a timeout in milliseconds to control the click rate
+            // Trigger the click event for the ball
+            ball.dispatchEvent({ type: 'click' });
+        }
+    }
+});
+
+// Global mouse move event listener
+window.addEventListener('mousemove', function (event) {
+    // Update the mouse coordinates
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    // Perform raycasting on mouse move
+    raycaster.setFromCamera(mouse, camera);
+    var intersects = raycaster.intersectObjects(balls, true);
+
+    // Change cursor style on mouse over
+    if (intersects.length > 0) {
+        renderer.domElement.style.cursor = 'pointer';
+    } else {
+        renderer.domElement.style.cursor = 'auto';
+    }
+});
+
+function createClickableCircle(direction) {
+    // Create a parent container
+    var container = new THREE.Object3D();
+
+    var circleGeometry = new THREE.CircleGeometry(0.5, 32);
+    var circleMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
+    var circleMesh = new THREE.Mesh(circleGeometry, circleMaterial);
+    // Rotate the circle by 90 degrees
+    circleMesh.rotation.set(0, Math.PI / 2, 0);
+
+    // Set up event listeners for each ball
+    circleMesh.userData = {
+        isClickEnabled: true,
+        onClick: function () {
+            console.log("Ball Clicked!");
+            if (direction === 1) changeMonth(1);
+            else if (direction === 0) changeMonth(-1);
+        }
+    };
+
+    // Add event listeners for mouse events
+    circleMesh.addEventListener('click', function () {
+        if (circleMesh.userData.onClick) {
+            circleMesh.userData.onClick();
+        }
+    });
+
+    container.add(circleMesh);
+
+    // Create an arrow helper (pointing to the right in this case)
+    var arrowDirection = new THREE.Vector3(1, 0, 0);
+    var arrowLength = 1;
+    var arrowHelper = new THREE.ArrowHelper(arrowDirection, new THREE.Vector3(0, 0, 0), arrowLength * 0.5, 0xff0000);
+    // Rotate the arrow helper by 90 degrees to match the circle
+
+    if (direction === 1) arrowHelper.rotation.set(-Math.PI / 2, 0, 0);
+    else if (direction === 0) arrowHelper.rotation.set(Math.PI / 2, 0, 0);
+
+    container.add(arrowHelper);
+
+    // Move the container to a new position
+
+    if (direction === 1) container.position.set(0, 0.5, -2.5);
+    else if (direction === 0) container.position.set(0, 0.5, 2.5);
+
+    scene.add(container);
+
+    // Add the ball to the array
+    balls.push(circleMesh);
+}
 
 
+function changeMonth(delta) {
+    currentMonth += delta;
+    if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear = currentYear - 1;
+    } else if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear = currentYear + 1;
+    }
 
+    // Remove the existing calendar from the group
+    // group.remove(scene.getObjectByName("calendar_" + currentMonth));
+    group.remove(currentCalendar);
 
-
-
+    // Create and add the new calendar for the updated month
+    var newCalendar = createMonthlyCalendar(currentYear, currentMonth);
+    positionCalendarOnFace(newCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
+    newCalendar.name = "calendar_" + currentMonth;
+    group.add(newCalendar); // Add the new calendar to the group
+    currentCalendar = newCalendar; // Update the reference to the current calendar
+}
