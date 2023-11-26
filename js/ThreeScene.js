@@ -144,13 +144,22 @@ function createDayCube(x, y, z, day,month,dayOfWeek) {
     return cube;
 }
 
-function createDayCubeYearly(x, y, z, day) {
+function createDayCubeYearly(x, y, z, day,month,dayOfWeek) {
     var geometry = new THREE.BoxGeometry(0.105, 0.105, 0.05);
+    var cubeColor = 0xcccccc;
     var material = new THREE.MeshBasicMaterial({ color: 0xcccccc });
     var cube = new THREE.Mesh(geometry, material);
 
+    if (dayOfWeek === 0 || isHoliday(day, month)) {
+        cubeColor = 0xff0000;
+    }
+    var material = new THREE.MeshBasicMaterial({ color: cubeColor });
+    var cube = new THREE.Mesh(geometry, material);
+
+    // Vytvořte samostatný materiál pro text
+    var textColor = (dayOfWeek === 0 || isHoliday(day, month)) ? 0xffffff : 0x000000;
     // Create a separate material for the text
-    var textMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    var textMaterial = new THREE.MeshBasicMaterial({ color: textColor });
 
     // Create text geometry for the day number
     var textGeometry = new THREE.TextGeometry(day.toString(), {
@@ -245,7 +254,7 @@ function createMonthlyCalendar(year, month, isYearlyObject) {
         var yearlyShiftX = 0.06
         var yearlyShiftY = 0.15
         if( isYearlyObject ) {
-            cube = createDayCubeYearly(yearlyShiftX + (col * 0.105), yearlyShiftY + (-row * 0.105), 0.11, day);
+            cube = createDayCubeYearly(yearlyShiftX + (col * 0.105), yearlyShiftY + (-row * 0.105), 0.11, day,month,(day + firstDayOfMonth) % 7);
         }
         else {
             cube = createDayCube(col * 0.3, -row * 0.3, 0.07, day,month,(day + firstDayOfMonth) % 7);
