@@ -50,6 +50,197 @@ function init() {
     scene.add( sphere );
 }
 
+// Create the color picker element
+var cubeColorPicker = createColorPicker('cubeColorPicker', '240px', 'Cube Color:');
+var cubeHollidayColorPicker = createColorPicker('cubeHollidayColorPicker', '280px', 'Cube Color Holliday:');
+var pyramidColorPicker = createColorPicker('pyramidColorPicker', '320px', 'Pyramid Color:');
+var regularDaysColorPicker = createColorPicker('regularDaysColorPicker', '40px', 'Regular Days:');
+var specialDaysColorPicker = createColorPicker('specialDaysColorPicker', '80px', 'Special Days:');
+var dayNamesColorPicker = createColorPicker('dayNamesColorPicker', '120px', 'Day Names:');
+var monthNamesColorPicker = createColorPicker('monthNamesColorPicker', '160px', 'Month Names:');
+var yearNumberColorPicker = createColorPicker('yearNumberColorPicker', '200px', 'Year number:');
+
+
+
+
+document.body.appendChild(cubeColorPicker);
+document.body.appendChild(cubeHollidayColorPicker);
+document.body.appendChild(pyramidColorPicker);
+document.body.appendChild(yearNumberColorPicker);
+document.body.appendChild(dayNamesColorPicker);
+document.body.appendChild(regularDaysColorPicker);
+document.body.appendChild(specialDaysColorPicker);
+document.body.appendChild(monthNamesColorPicker);
+
+
+// Attach event listeners to the color pickers
+
+cubeColorPicker.addEventListener('input', updateCubeColor);
+regularDaysColorPicker.addEventListener('input', updateRegularDaysColor);
+specialDaysColorPicker.addEventListener('input', updateSpecialDaysColor);
+dayNamesColorPicker.addEventListener('input', updateDayNamesColor);
+monthNamesColorPicker.addEventListener('input', updateMonthNamesColor);
+yearNumberColorPicker.addEventListener('input', updateYearNumberColor);
+cubeHollidayColorPicker.addEventListener('input', updateHollidayCubeColor);
+pyramidColorPicker.addEventListener('input', updatePyramidColor);
+
+
+// Function to create a color picker element
+function createColorPicker(id, position, labelText) {
+    var container = document.createElement('div');
+
+    // Create a label element
+    var label = document.createElement('label');
+    label.textContent = labelText;
+    label.style.position = 'absolute';
+    label.style.width = '120px'; // Adjust the width as needed
+    label.style.top = position;
+
+    container.appendChild(label);
+
+    // Create a color picker element
+    var colorPicker = document.createElement('input');
+    colorPicker.type = 'color';
+    colorPicker.id = id;
+    colorPicker.style.position = 'absolute';
+    colorPicker.style.top = position;
+    colorPicker.style.left = '140px'; // Adjust the left position as needed
+    container.appendChild(colorPicker);
+
+    document.body.appendChild(container);
+
+    return colorPicker;
+}
+
+function updatePyramidColor() {
+    var newColor = pyramidColorPicker.value;
+
+    // Aktualizujte farbu vonkajšieho materiálu prizmy
+    prismMesh.material[0].color.set(colorToThreeJSColor(newColor));
+}
+
+function updateCubeColor() {
+    var newColor = cubeColorPicker.value;
+    var isRegularDay = false;
+    console.log("zacinam");
+
+    // Update the color of the cube in the calendar
+    group.traverse(function (child) {
+        if (child instanceof THREE.Mesh) {
+            if (child.userData.isCube) {
+                var day = child.userData.day;
+                var month = child.userData.month;
+                var dayOfWeek = child.userData.dayOfWeek;
+                if (!(isHoliday(day, month) || dayOfWeek === 0)) {
+                    console.log("som tu")
+                    child.material.color.set(colorToThreeJSColor(newColor));
+                }
+            }
+        }
+    });
+}
+
+function updateHollidayCubeColor() {
+    var newColor = cubeHollidayColorPicker.value;
+    var isRegularDay = false;
+    console.log("zacinam");
+
+    // Update the color of the cube in the calendar
+    group.traverse(function (child) {
+        if (child instanceof THREE.Mesh) {
+            if (child.userData.isCube) {
+                var day = child.userData.day;
+                var month = child.userData.month;
+                var dayOfWeek = child.userData.dayOfWeek;
+                if (isHoliday(day, month) || dayOfWeek === 0) {
+                    console.log("som tu")
+                    child.material.color.set(colorToThreeJSColor(newColor));
+                }
+            }
+        }
+    });
+}
+
+function updateDayNamesColor() {
+    var newColor = dayNamesColorPicker.value;
+
+    // Update the color of day names in the calendar
+    group.traverse(function (child) {
+        if (child instanceof THREE.Mesh && child.userData.isDayName) {
+            child.material.color.set(colorToThreeJSColor(newColor));
+        }
+    });
+}
+function updateYearNumberColor() {
+    var newColor = yearNumberColorPicker.value;
+
+    // Update the color of the year number in the calendar
+    group.traverse(function (child) {
+        if (child instanceof THREE.Mesh && child.userData.isYearNumber) {
+            child.material.color.set(colorToThreeJSColor(newColor));
+        }
+    });
+}
+function updateMonthNamesColor() {
+    var newColor = monthNamesColorPicker.value;
+
+    // Update the color of month names in the calendar
+    group.traverse(function (child) {
+        if (child instanceof THREE.Mesh && child.userData.isMonthName) {
+            child.material.color.set(colorToThreeJSColor(newColor));
+        }
+    });
+}
+
+// Function to update text color based on the main color picker value
+function updateTextColor() {
+    updateColorForDays(mainColorPicker, false, false, true);
+}
+function updateRegularDaysColor() {
+    updateColorForDays(regularDaysColorPicker, false, false, true);
+}
+
+// Function to update text color based on the special days color picker value
+function updateSpecialDaysColor() {
+    updateColorForDays(specialDaysColorPicker, true, true);
+}
+
+// Function to update text color based on the specified color picker value
+function updateColorForDays(colorPicker, includeHolidays = false, includeSundays = false, includeRegularDays = false) {
+    var newColor = colorPicker.value;
+
+    // Update the color of existing text meshes for selected days
+    group.traverse(function (child) {
+        if (child instanceof THREE.Mesh && child.userData.isText) {
+            var day = child.userData.day;
+            var month = child.userData.month;
+            var dayOfWeek = child.userData.dayOfWeek;
+
+            if ((includeHolidays && isHoliday(day, month)) || (includeSundays && dayOfWeek === 0) || (includeRegularDays && !isHoliday(day, month) && dayOfWeek !== 0)) {
+                child.material.color.set(colorToThreeJSColor(newColor));
+            }
+        }
+    });
+}
+
+
+
+// Function to update text color based on the color picker value
+// Add a variable to store the current text color
+var textColor = '#000000';
+
+// Function to update text color based on the color picker value
+// Function to update text color based on the color picker value
+
+
+
+// Convert hex color to Three.js color format
+function colorToThreeJSColor(hexColor) {
+    var color = new THREE.Color();
+    color.set(hexColor);
+    return color;
+}
+
 function render() {
     requestAnimationFrame(render);
     renderer.render(scene, camera);
@@ -69,7 +260,7 @@ function addObjects() {
         side: THREE.DoubleSide
     });
 
-// Create the material for the inner faces
+    // Create the material for the inner faces
     var materialInner = new THREE.MeshBasicMaterial({
         visible: false
     });
@@ -83,7 +274,7 @@ function addObjects() {
     ]);
 
     // Create the triangular prism mesh
-    var prismMesh = new THREE.Mesh(geometryPrism, [materialOuter, materialInner]);
+    prismMesh = new THREE.Mesh(geometryPrism, [materialOuter, materialInner]);
     prismMesh.position.set(0, 0.2, 0);
     prismMesh.rotation.x = -Math.PI / 2;
     group.add(prismMesh);
@@ -94,6 +285,12 @@ function addObjects() {
 
     // Add the group to the scene
     scene.add(group);
+
+    // Append the cube color picker to the document body
+    document.body.appendChild(cubeColorPicker);
+
+    // Attach event listener to the cube color picker
+    cubeColorPicker.addEventListener('input', updateCubeColor);
 }
 
 function getCurrentYear() {
@@ -119,21 +316,16 @@ function positionCalendarOnFace(calendar, prism, rotationY, rotationX, distanceF
 
 
 // Function to create a cube representing a day with text
-function createDayCube(x, y, z, day,month,dayOfWeek) {
-    var geometry = new THREE.BoxGeometry(0.3, 0.3, 0.05);
-    var cubeColor = 0xcccccc;
-    var material = new THREE.MeshBasicMaterial({ color: 0xcccccc });
-    var cube = new THREE.Mesh(geometry, material);
+function createDayCube(x, y, z, day, month, dayOfWeek) {
+    var cubeColor =  0xcccccc;
 
     if (dayOfWeek === 0 || isHoliday(day, month)) {
         cubeColor = 0xff0000;
     }
 
-    var material = new THREE.MeshBasicMaterial({ color: cubeColor });
-    var cube = new THREE.Mesh(geometry, material);
-
     // Vytvořte samostatný materiál pro text
     var textColor = (dayOfWeek === 0 || isHoliday(day, month)) ? 0xffffff : 0x000000;
+
     // Create a separate material for the text
     var textMaterial = new THREE.MeshBasicMaterial({ color: textColor });
 
@@ -144,30 +336,46 @@ function createDayCube(x, y, z, day,month,dayOfWeek) {
         height: 0.03
     });
 
-    // Create a mesh with the text geometry and the separate text material
     var textMesh = new THREE.Mesh(textGeometry, textMaterial);
     textMesh.position.set(-0.05, -0.05, 0.02);
-    cube.add(textMesh);
 
+    var material = new THREE.MeshBasicMaterial({ color: cubeColor });
+    var cube = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.05), material);
+
+    cube.add(textMesh);
     cube.position.set(x, y, z);
+
+    // Set userData properties
+    textMesh.userData.isText = true;
+    cube.userData.isCube = true;
+    cube.userData.day = day;
+    cube.userData.month = month;
+    cube.userData.dayOfWeek = dayOfWeek;
+    textMesh.userData.day = day;
+    textMesh.userData.month = month;
+    textMesh.userData.dayOfWeek = dayOfWeek;
+
+    // Set the initial text color
+    textMesh.material.color.set(colorToThreeJSColor(textColor));
+
+    // Set userData properties for the cube
+
 
     return cube;
 }
 
-function createDayCubeYearly(x, y, z, day,month,dayOfWeek) {
-    var geometry = new THREE.BoxGeometry(0.105, 0.105, 0.05);
+
+
+function createDayCubeYearly(x, y, z, day, month, dayOfWeek) {
     var cubeColor = 0xcccccc;
-    var material = new THREE.MeshBasicMaterial({ color: 0xcccccc });
-    var cube = new THREE.Mesh(geometry, material);
 
     if (dayOfWeek === 0 || isHoliday(day, month)) {
         cubeColor = 0xff0000;
     }
-    var material = new THREE.MeshBasicMaterial({ color: cubeColor });
-    var cube = new THREE.Mesh(geometry, material);
 
     // Vytvořte samostatný materiál pro text
     var textColor = (dayOfWeek === 0 || isHoliday(day, month)) ? 0xffffff : 0x000000;
+
     // Create a separate material for the text
     var textMaterial = new THREE.MeshBasicMaterial({ color: textColor });
 
@@ -178,15 +386,31 @@ function createDayCubeYearly(x, y, z, day,month,dayOfWeek) {
         height: 0.01
     });
 
-    // Create a mesh with the text geometry and the separate text material
     var textMesh = new THREE.Mesh(textGeometry, textMaterial);
     textMesh.position.set(-0.01, -0.01, 0.02);
-    cube.add(textMesh);
 
+    var material = new THREE.MeshBasicMaterial({ color: cubeColor });
+    var cube = new THREE.Mesh(new THREE.BoxGeometry(0.105, 0.105, 0.05), material);
+
+    cube.add(textMesh);
     cube.position.set(x, y, z);
+
+    // Set userData properties
+    textMesh.userData.isText = true;
+    cube.userData.isCube = true;
+    cube.userData.day = day;
+    cube.userData.month = month;
+    cube.userData.dayOfWeek = dayOfWeek;
+    textMesh.userData.day = day;
+    textMesh.userData.month = month;
+    textMesh.userData.dayOfWeek = dayOfWeek;
+
+    // Set the initial text color
+    textMesh.material.color.set(colorToThreeJSColor(textColor));
 
     return cube;
 }
+
 
 // Function to create a monthly calendar with day names
 function createMonthlyCalendar(year, month, isYearlyObject) {
@@ -225,7 +449,7 @@ function createMonthlyCalendar(year, month, isYearlyObject) {
         monthYearMesh = new THREE.Mesh(monthYearGeometry, monthYearMaterial);
         monthYearMesh.position.set(0.5, 0.5, 0.05);
     }
-
+    monthYearMesh.userData.isMonthName = true;
     calendar.add(monthYearMesh);
 
 
@@ -240,6 +464,8 @@ function createMonthlyCalendar(year, month, isYearlyObject) {
             var textMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
             var textMesh = new THREE.Mesh(textGeometry, textMaterial);
             textMesh.position.set(col * 0.11, 0.3, 0.08);
+            textMesh.userData.isDayName = true;
+
             calendar.add(textMesh);
         }
         else {
@@ -252,6 +478,7 @@ function createMonthlyCalendar(year, month, isYearlyObject) {
             var textMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
             var textMesh = new THREE.Mesh(textGeometry, textMaterial);
             textMesh.position.set(col * 0.3 - 0.1, 0.3, 0.05);
+            textMesh.userData.isDayName = true;
             calendar.add(textMesh);
         }
 
@@ -289,7 +516,6 @@ function isHoliday(day, month) {
         10: [1, 17],
         11: [24, 25, 26]
     };
-
     return holidays[month] && holidays[month].includes(day);
 }
 
@@ -329,9 +555,12 @@ function createYearlyCalendar(year) {
     });
     yearMesh = new THREE.Mesh(yearGeometry, yearMaterial);
     yearMesh.position.set(0.75, 0.45, 0.04);
+    yearMesh.userData.isYearNumber = true;
     yearlyCalendar.add(yearMesh);
     circle1 = createClickableCircle(1,true);
     circle2 = createClickableCircle(0,true);
+
+
 
     return yearlyCalendar;
 }
