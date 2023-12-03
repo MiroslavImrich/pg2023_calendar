@@ -51,17 +51,22 @@ function init() {
 }
 
 // Create the color picker element
-var cubeColorPicker = createColorPicker('cubeColorPicker', '240px', 'Cube Color:');
-var cubeHollidayColorPicker = createColorPicker('cubeHollidayColorPicker', '280px', 'Cube Color Holliday:');
-var pyramidColorPicker = createColorPicker('pyramidColorPicker', '320px', 'Pyramid Color:');
-var regularDaysColorPicker = createColorPicker('regularDaysColorPicker', '40px', 'Regular Days:');
-var specialDaysColorPicker = createColorPicker('specialDaysColorPicker', '80px', 'Special Days:');
-var dayNamesColorPicker = createColorPicker('dayNamesColorPicker', '120px', 'Day Names:');
-var monthNamesColorPicker = createColorPicker('monthNamesColorPicker', '160px', 'Month Names:');
-var yearNumberColorPicker = createColorPicker('yearNumberColorPicker', '200px', 'Year number:');
+var cubeColorPicker = createColorPicker('cubeColorPicker', '240px', 'Cube Color:', '#cccccc');
+var cubeHollidayColorPicker = createColorPicker('cubeHollidayColorPicker', '280px', 'Cube Color Holliday:', '#ff0000');
+var pyramidColorPicker = createColorPicker('pyramidColorPicker', '320px', 'Pyramid Color:', '#dddddd');
+var regularDaysColorPicker = createColorPicker('regularDaysColorPicker', '40px', 'Regular Days:', '#000000');
+var specialDaysColorPicker = createColorPicker('specialDaysColorPicker', '80px', 'Special Days:', '#ffffff');
+var dayNamesColorPicker = createColorPicker('dayNamesColorPicker', '120px', 'Day Names:', '#000000');
+var monthNamesColorPicker = createColorPicker('monthNamesColorPicker', '160px', 'Month Names:', '#000000');
+var yearNumberColorPicker = createColorPicker('yearNumberColorPicker', '200px', 'Year number:', '#000000');
 
-
-
+let cubeCol = '#cccccc';
+let cubeHollidayCol = '#ff0000';
+let regularDaysCol = '#000000';
+let specialDaysCol = '#ffffff';
+let dayNamesCol = '#000000';
+let monthNamesCol = '#000000';
+let yearNumberCol = '#000000';
 
 document.body.appendChild(cubeColorPicker);
 document.body.appendChild(cubeHollidayColorPicker);
@@ -86,7 +91,7 @@ pyramidColorPicker.addEventListener('input', updatePyramidColor);
 
 
 // Function to create a color picker element
-function createColorPicker(id, position, labelText) {
+function createColorPicker(id, position, labelText, defaultColor) {
     var container = document.createElement('div');
 
     // Create a label element
@@ -105,6 +110,7 @@ function createColorPicker(id, position, labelText) {
     colorPicker.style.position = 'absolute';
     colorPicker.style.top = position;
     colorPicker.style.left = '140px'; // Adjust the left position as needed
+    colorPicker.value = defaultColor;
     container.appendChild(colorPicker);
 
     document.body.appendChild(container);
@@ -123,6 +129,7 @@ function updateCubeColor() {
     var newColor = cubeColorPicker.value;
     var isRegularDay = false;
     console.log("zacinam");
+    cubeCol = newColor;
 
     // Update the color of the cube in the calendar
     group.traverse(function (child) {
@@ -144,6 +151,7 @@ function updateHollidayCubeColor() {
     var newColor = cubeHollidayColorPicker.value;
     var isRegularDay = false;
     console.log("zacinam");
+    cubeHollidayCol = newColor;
 
     // Update the color of the cube in the calendar
     group.traverse(function (child) {
@@ -163,6 +171,7 @@ function updateHollidayCubeColor() {
 
 function updateDayNamesColor() {
     var newColor = dayNamesColorPicker.value;
+    dayNamesCol = newColor;
 
     // Update the color of day names in the calendar
     group.traverse(function (child) {
@@ -173,6 +182,7 @@ function updateDayNamesColor() {
 }
 function updateYearNumberColor() {
     var newColor = yearNumberColorPicker.value;
+    yearNumberCol = newColor;
 
     // Update the color of the year number in the calendar
     group.traverse(function (child) {
@@ -183,6 +193,7 @@ function updateYearNumberColor() {
 }
 function updateMonthNamesColor() {
     var newColor = monthNamesColorPicker.value;
+    monthNamesCol = newColor;
 
     // Update the color of month names in the calendar
     group.traverse(function (child) {
@@ -195,6 +206,7 @@ function updateMonthNamesColor() {
 // Function to update text color based on the main color picker value
 function updateTextColor() {
     updateColorForDays(mainColorPicker, false, false, true);
+
 }
 function updateRegularDaysColor() {
     updateColorForDays(regularDaysColorPicker, false, false, true);
@@ -208,6 +220,13 @@ function updateSpecialDaysColor() {
 // Function to update text color based on the specified color picker value
 function updateColorForDays(colorPicker, includeHolidays = false, includeSundays = false, includeRegularDays = false) {
     var newColor = colorPicker.value;
+    if(includeHolidays === true){
+        specialDaysCol = newColor;
+    }
+    if(includeHolidays === false && includeSundays === false){
+        regularDaysCol = newColor;
+    }
+
 
     // Update the color of existing text meshes for selected days
     group.traverse(function (child) {
@@ -317,14 +336,14 @@ function positionCalendarOnFace(calendar, prism, rotationY, rotationX, distanceF
 
 // Function to create a cube representing a day with text
 function createDayCube(x, y, z, day, month, dayOfWeek) {
-    var cubeColor =  0xcccccc;
+    var cubeColor =  cubeCol;
 
     if (dayOfWeek === 0 || isHoliday(day, month)) {
-        cubeColor = 0xff0000;
+        cubeColor = cubeHollidayCol;
     }
 
     // Vytvořte samostatný materiál pro text
-    var textColor = (dayOfWeek === 0 || isHoliday(day, month)) ? 0xffffff : 0x000000;
+    var textColor = (dayOfWeek === 0 || isHoliday(day, month)) ? specialDaysCol : regularDaysCol;
 
     // Create a separate material for the text
     var textMaterial = new THREE.MeshBasicMaterial({ color: textColor });
@@ -367,14 +386,14 @@ function createDayCube(x, y, z, day, month, dayOfWeek) {
 
 
 function createDayCubeYearly(x, y, z, day, month, dayOfWeek) {
-    var cubeColor = 0xcccccc;
+    var cubeColor = cubeCol;
 
     if (dayOfWeek === 0 || isHoliday(day, month)) {
-        cubeColor = 0xff0000;
+        cubeColor = cubeHollidayCol;
     }
 
     // Vytvořte samostatný materiál pro text
-    var textColor = (dayOfWeek === 0 || isHoliday(day, month)) ? 0xffffff : 0x000000;
+    var textColor = (dayOfWeek === 0 || isHoliday(day, month)) ? specialDaysCol : regularDaysCol;
 
     // Create a separate material for the text
     var textMaterial = new THREE.MeshBasicMaterial({ color: textColor });
@@ -426,7 +445,7 @@ function createMonthlyCalendar(year, month, isYearlyObject) {
 
     var monthYearText;
     var monthYearGeometry;
-    var monthYearMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    var monthYearMaterial = new THREE.MeshBasicMaterial({ color: monthNamesCol });
     var monthYearMesh;
 
     if( isYearlyObject ) {
@@ -461,7 +480,7 @@ function createMonthlyCalendar(year, month, isYearlyObject) {
                 height: 0.01
             });
 
-            var textMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            var textMaterial = new THREE.MeshBasicMaterial({ color:dayNamesCol });
             var textMesh = new THREE.Mesh(textGeometry, textMaterial);
             textMesh.position.set(col * 0.11, 0.3, 0.08);
             textMesh.userData.isDayName = true;
@@ -475,7 +494,7 @@ function createMonthlyCalendar(year, month, isYearlyObject) {
                 height: 0.03
             });
 
-            var textMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            var textMaterial = new THREE.MeshBasicMaterial({ color: dayNamesCol });
             var textMesh = new THREE.Mesh(textGeometry, textMaterial);
             textMesh.position.set(col * 0.3 - 0.1, 0.3, 0.05);
             textMesh.userData.isDayName = true;
@@ -545,7 +564,7 @@ function createYearlyCalendar(year) {
 
     var yearText = year.toString();
     var yearGeometry;
-    var yearMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    var yearMaterial = new THREE.MeshBasicMaterial({ color: yearNumberCol });
     var yearMesh;
 
     yearGeometry = new THREE.TextGeometry(yearText, {
@@ -701,10 +720,11 @@ function createClickableCircle(direction,isYearly) {
 
 // Create a button element
 var toggleViewButton = document.createElement('button');
-toggleViewButton.textContent = 'Toggle View';
+toggleViewButton.textContent = 'Monthly calendar';
 toggleViewButton.style.position = 'absolute';
 toggleViewButton.style.top = '10px';
 toggleViewButton.style.left = '10px';
+toggleViewButton.style.width = '10rem';
 
 // Append the button to the document body
 document.body.appendChild(toggleViewButton);
@@ -714,6 +734,12 @@ var debounceTimeout;
 toggleViewButton.addEventListener('click', function () {
     if (!debounceTimeout) {
         toggleCalendarView();
+        if(toggleViewButton.textContent === 'Monthly calendar'){
+            toggleViewButton.textContent = 'Yearly calendar';
+        }else {
+            toggleViewButton.textContent = 'Monthly calendar';
+        }
+
         debounceTimeout = setTimeout(function () {
             debounceTimeout = null;
         }, 1000); // Set the timeout duration (in milliseconds)
@@ -786,7 +812,7 @@ var screenshotButton = document.createElement('button');
 screenshotButton.textContent = 'Take Screenshot';
 screenshotButton.style.position = 'absolute';
 screenshotButton.style.top = '10px';
-screenshotButton.style.left = '6.5rem';
+screenshotButton.style.left = '11rem';
 screenshotButton.style.width = '10rem';
 
 // Append the button to the document body
