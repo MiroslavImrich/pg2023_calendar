@@ -8,8 +8,8 @@ var isYearly;
 var fontLoader = new THREE.FontLoader();
 var font;
 
-var currentMonth = 10;
-var currentYear = 2023;
+var currentMonth = getCurrentMonth();
+var currentYear = getCurrentYear();
 
 var circle1;
 var circle2;
@@ -94,6 +94,16 @@ function addObjects() {
 
     // Add the group to the scene
     scene.add(group);
+}
+
+function getCurrentYear() {
+    var currentDate = new Date();
+    return currentDate.getFullYear();
+}
+
+function getCurrentMonth() {
+    var currentDate = new Date();
+    return currentDate.getMonth();
 }
 
 function positionCalendarOnFace(calendar, prism, rotationY, rotationX, distanceFromCenterX, distanceFromCenterY, distanceFromCenterZ) {
@@ -540,4 +550,71 @@ function changeYear(delta) {
     newCalendar.name = "calendar_" + currentMonth;
     group.add(newCalendar); // Add the new calendar to the group
     currentCalendar = newCalendar; // Update the reference to the current calendar
+}
+
+// Create a button element
+var screenshotButton = document.createElement('button');
+screenshotButton.textContent = 'Take Screenshot';
+screenshotButton.style.position = 'absolute';
+screenshotButton.style.top = '10px';
+screenshotButton.style.left = '6.5rem';
+screenshotButton.style.width = '10rem';
+
+// Append the button to the document body
+document.body.appendChild(screenshotButton);
+
+// Register a click event listener for the button
+screenshotButton.addEventListener('click', function () {
+    takeScreenshot();
+});
+
+async function takeScreenshot() {
+    // Create a canvas element to render the screenshot
+    var screenshotCanvas = document.createElement('canvas');
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+
+    // Set the canvas size to match the window size
+    screenshotCanvas.width = width;
+    screenshotCanvas.height = height;
+
+    // Get the rendering context
+    var context = screenshotCanvas.getContext('2d');
+
+    // Render the current scene to the canvas
+    renderer.render(scene, camera);
+
+    // Copy the rendered image from the WebGL renderer to the canvas
+    context.drawImage(renderer.domElement, 0, 0, width, height);
+
+    // Convert the canvas content to a Blob representing a PNG image
+    screenshotCanvas.toBlob(async function (blob) {
+        // Use showSaveFilePicker if available
+        if ('showSaveFilePicker' in window) {
+            const handle = await window.showSaveFilePicker({
+                suggestedName: 'screenshot.png',
+                types: [{
+                    description: 'PNG Files',
+                    accept: {
+                        'image/png': ['.png'],
+                    },
+                }],
+            });
+
+            const writable = await handle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+        } else {
+            // If showSaveFilePicker is not available, fallback to traditional download
+            var dataURL = URL.createObjectURL(blob);
+
+            // Create a download link for the screenshot
+            var downloadLink = document.createElement('a');
+            downloadLink.href = dataURL;
+            downloadLink.download = 'screenshot.png';
+
+            // Trigger a click event on the download link to prompt the user to save the screenshot
+            downloadLink.click();
+        }
+    }, 'image/png');
 }
