@@ -379,7 +379,7 @@ function getSlovakName(day, month) {
         "Boris","Terezia","Vladimira","Hedviga","Lukas","Kristian","Vendelin","Ursula","Sergej","Alojzia",
         "Kvetoslava","Aurel","Demeter","Sabina","Dobromila","Klara","Simon, Simona","Aurelia","Denis","",
         "Hubert","Karol","Imrich","Renata","Rene","Bohumir","Teodor","Tibor","Martin, Maros","Svatopluk","Stanislav",
-        "Irma","Leopold","Agnesa","Klaudia","Eugen","Alžbeta","Felix","Elvira","Cecilia","Klement","Emilia","Katarina",
+        "Irma","Leopold","Agnesa","Klaudia","Eugen","Alzbeta","Felix","Elvira","Cecilia","Klement","Emilia","Katarina",
         "Kornel","Milan","Henrieta","Vratko","Ondrej","Edmund","Bibiana","Oldrich","Barbora","Oto",
         "Mikulas","Ambroz","Marina","Izabela","Raduz","Hilda","Otilia","Lucia","Branislava","Ivica",
         "Albina","Kornelia","Slava","Judita","Dagmara","Bohdan","Adela","Nadezda","Adam, Eva","","Stefan","Filomena",
