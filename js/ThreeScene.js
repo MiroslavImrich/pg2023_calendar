@@ -332,11 +332,63 @@ function positionCalendarOnFace(calendar, prism, rotationY, rotationX, distanceF
     calendar.position.copy(faceCenter);
 }
 
+function getDayOfYear(month, day) {
+    var daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    var dayOfYear = 0;
+    console.log(month+1);
+    for (var i = 0; i <= month; i++) {
+        dayOfYear += daysInMonth[i];
+    }
 
+    dayOfYear += day;
 
-// Function to create a cube representing a day with text
+    return dayOfYear;
+}
+
+function getSlovakName(day, month) {
+    return [
+        "Novy rok","Alexandra","Daniela","Drahoslav","Andrea","Antonia","Bohuslava","Severin","Alexej","Dasa",
+        "Malvina","Ernest","Rastislav","Radovan","Dobroslav","Kristina","Natalia","Bohdana","Drahomira",
+        "Dalibor","Vincent","Zora","Milos","Timotej","Gejza","Tamara","Bohus","Alfonz","Gaspar","Ema",
+        "Emil","Tatiana","Erika, Erik","Blazej","Veronika","Agata","Dorota","Vanda","Zoja","Zdenko","Gabriela",
+        "Dezider","Perla","Arpad","Valentin","Pravoslav","Ida, Liana","Miloslava","Jaromir","Vlasta","Livia",
+        "Eleonora","Etela","Roman","Matej","Frederik","Viktor","Alexander","Zlatica","Albin",
+        "Anezka","Bohumil","Kazimir","Fridrich","Radoslav","Tomas","Alan, Alana",
+        "Frantiska","Branislav","Angela","Gregor","Vlastimil","Matilda","Svetlana","Boleslav",
+        "Lubica","Eduard","Jozef","Vitazoslav","Blahoslav","Benadik","Adrian","Gabriel","Marian",
+        "Emanuel","Alena","Sona","Miroslav","Vieroslava","Benjamin","Hugo","Zita","Richard","Izidor","Miroslava",
+        "Irena","Zoltan","Albert","Milena","Igor","Julius","Estera","Ales","Justina","Fedor","Dana, Danica",
+        "Rudolf, Rudolfa","Valer","Jela","Marcel","Ervin","Slavomir","Vojtech","Juraj","Marek","Jaroslava",
+        "Jaroslav","Jarmila","Lea","Anastazia","","Zigmund","Galina, Timea","Florian","Lesia, Lesana","Hermina",
+        "Monika","Ingrida","Roland","Viktória","Blazena","Pankrac","Servac","Bonifac","Zofia, Sofia","Svetozar",
+        "Gizela","Viola","Gertruda","Bernard","Zina","Julia, Juliana","Zelmira","Ela","Urban","Dusan",
+        "Iveta","Viliam","Vilma","Ferdinand","Petrana","Zaneta","Xenia","Karolina","Lenka",
+        "Laura","Norbert","Robert","Medard","Stanislava","Margareta","Dobroslava","Zlatko",
+        "Anton","Vasil","Vit","Blanka","Adolf","Vratislav","Alfred","Valeria","Alojz","Paulina",
+        "Sidónia","Jan","Olivia","Adriana","Ladislav","Beata","Peter,Pavol","Melania",
+        "Diana","Berta","Miloslav","Prokop","Cyril, Metod","Patrik","Oliver","Ivan","Lujza","Amalia",
+        "Milota","Nina","Margita","Kamil","Henrich","Drahomir, Rut","Bohuslav","Kamila","Dusana","Ilja",
+        "Daniel","Magdalena","Olga","Vladimir","Jakub, Timur","Anna, Hana","Bozena","Kristof",
+        "Marta","Libusa","Ignac","Bozidara","Gustav","Jergus","Dominika","Hortenzia","Jozefina",
+        "Stefania","Oskar","Lubomira","Vavrinec","Zuzana","Darina","Lubomir","Mojmir","Marcela","Leonard",
+        "Milica","Helena","Lýdia","Anabela, Liliana","Jana","Tichomir","Filip","Bartolomej","Ludovit","Samuel","Silvia","Augustin","Nikola",
+        "Ruzena","Nora","Drahoslava","Linda","Belo","Rozalia","Regina","Alica","Marianna","Miriama","Martina","Oleg","Bystrik","Maria","Ctibor","Ludomil","Jolana",
+        "Ludmila","Olympia","Eugenia","Konstantin","Luboslav","Matus","Moric","Zdenka","Lubos",
+        "Vladislav","Edita","Cyprian","Vaclav","Michal","Jarolim","Arnold","Levoslav","Stela",
+        "František","Viera","Natalia","Eliška","Brigita","Dionyz","Slavomira","Valentina","Maximilian","Koloman",
+        "Boris","Terezia","Vladimira","Hedviga","Lukas","Kristian","Vendelin","Ursula","Sergej","Alojzia",
+        "Kvetoslava","Aurel","Demeter","Sabina","Dobromila","Klara","Simon, Simona","Aurelia","Denis","",
+        "Hubert","Karol","Imrich","Renata","Rene","Bohumir","Teodor","Tibor","Martin, Maros","Svatopluk","Stanislav",
+        "Irma","Leopold","Agnesa","Klaudia","Eugen","Alžbeta","Felix","Elvira","Cecilia","Klement","Emilia","Katarina",
+        "Kornel","Milan","Henrieta","Vratko","Ondrej","Edmund","Bibiana","Oldrich","Barbora","Oto",
+        "Mikulas","Ambroz","Marina","Izabela","Raduz","Hilda","Otilia","Lucia","Branislava","Ivica",
+        "Albina","Kornelia","Slava","Judita","Dagmara","Bohdan","Adela","Nadezda","Adam, Eva","","Stefan","Filomena",
+        "Ivana","Milada","David","Silvester"
+    ][getDayOfYear(month-1,day-1)] || "";
+}
+
 function createDayCube(x, y, z, day, month, dayOfWeek, year) {
-    var cubeColor =  cubeCol;
+    var cubeColor = cubeCol;
 
     if (dayOfWeek === 0 || isHoliday(day, month) || (day === 2 && month === 1 && year === 2024)) {
         cubeColor = cubeHollidayCol;
@@ -349,19 +401,52 @@ function createDayCube(x, y, z, day, month, dayOfWeek, year) {
     var textMaterial = new THREE.MeshBasicMaterial({ color: textColor });
 
     // Create text geometry for the day number
-    var textGeometry = new THREE.TextGeometry(day.toString(), {
-        font: font,
-        size: 0.1,
-        height: 0.03
-    });
+    var textGeometry;
+    if (day >= 10) {
+        // For two-digit days
+        textGeometry = new THREE.TextGeometry(day.toString(), {
+            font: font,
+            size: 0.1,
+            height: 0.02
+        });
+    } else {
+        // For single-digit days
+        textGeometry = new THREE.TextGeometry(day.toString(), {
+            font: font,
+            size: 0.1,
+            height: 0.02
+        });
+    }
 
     var textMesh = new THREE.Mesh(textGeometry, textMaterial);
-    textMesh.position.set(-0.05, -0.05, 0.02);
+
+    // Set position based on the number of digits
+    if (day >= 10) {
+        textMesh.position.set(-0.07, -0.05, 0.02); // For two-digit days
+    } else {
+        textMesh.position.set(-0.05, -0.05, 0.02); // For single-digit days
+    }
+    var name = getSlovakName(day, month);
+    // Create text geometry for the name
+    if(day === 29 && month === 1){
+        name = '';
+    }
+
+    console.log(name);
+    var nameGeometry = new THREE.TextGeometry(name, {
+        font: font,
+        size: 0.03,
+        height: 0.01
+    });
+
+    var nameMesh = new THREE.Mesh(nameGeometry, textMaterial);
+    nameMesh.position.set(-0.07, -0.13, 0.02); // Center text
 
     var material = new THREE.MeshBasicMaterial({ color: cubeColor });
     var cube = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.05), material);
 
     cube.add(textMesh);
+    cube.add(nameMesh); // Add the name mesh to the cube
     cube.position.set(x, y, z);
 
     // Set userData properties
@@ -370,6 +455,7 @@ function createDayCube(x, y, z, day, month, dayOfWeek, year) {
     cube.userData.day = day;
     cube.userData.month = month;
     cube.userData.dayOfWeek = dayOfWeek;
+    cube.userData.name = name; // Add name to cube userData
     textMesh.userData.day = day;
     textMesh.userData.month = month;
     textMesh.userData.dayOfWeek = dayOfWeek;
@@ -377,11 +463,10 @@ function createDayCube(x, y, z, day, month, dayOfWeek, year) {
     // Set the initial text color
     textMesh.material.color.set(colorToThreeJSColor(textColor));
 
-    // Set userData properties for the cube
-
-
     return cube;
 }
+
+
 
 
 
