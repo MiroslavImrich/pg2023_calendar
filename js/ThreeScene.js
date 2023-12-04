@@ -335,15 +335,15 @@ function positionCalendarOnFace(calendar, prism, rotationY, rotationX, distanceF
 
 
 // Function to create a cube representing a day with text
-function createDayCube(x, y, z, day, month, dayOfWeek) {
+function createDayCube(x, y, z, day, month, dayOfWeek, year) {
     var cubeColor =  cubeCol;
 
-    if (dayOfWeek === 0 || isHoliday(day, month)) {
+    if (dayOfWeek === 0 || isHoliday(day, month) || (day === 2 && month === 1 && year === 2024)) {
         cubeColor = cubeHollidayCol;
     }
 
     // Vytvořte samostatný materiál pro text
-    var textColor = (dayOfWeek === 0 || isHoliday(day, month)) ? specialDaysCol : regularDaysCol;
+    var textColor = (dayOfWeek === 0 || isHoliday(day, month) || (day === 2 && month === 1 && year === 2024)) ? specialDaysCol : regularDaysCol;
 
     // Create a separate material for the text
     var textMaterial = new THREE.MeshBasicMaterial({ color: textColor });
@@ -385,15 +385,15 @@ function createDayCube(x, y, z, day, month, dayOfWeek) {
 
 
 
-function createDayCubeYearly(x, y, z, day, month, dayOfWeek) {
+function createDayCubeYearly(x, y, z, day, month, dayOfWeek, year) {
     var cubeColor = cubeCol;
 
-    if (dayOfWeek === 0 || isHoliday(day, month)) {
+    if (dayOfWeek === 0 || isHoliday(day, month) || isHoliday(day, month) || (day === 2 && month === 1 && year === 2024)) {
         cubeColor = cubeHollidayCol;
     }
 
     // Vytvořte samostatný materiál pro text
-    var textColor = (dayOfWeek === 0 || isHoliday(day, month)) ? specialDaysCol : regularDaysCol;
+    var textColor = (dayOfWeek === 0 || isHoliday(day, month) || (day === 2 && month === 1 && year === 2024)) ? specialDaysCol : regularDaysCol;
 
     // Create a separate material for the text
     var textMaterial = new THREE.MeshBasicMaterial({ color: textColor });
@@ -510,10 +510,10 @@ function createMonthlyCalendar(year, month, isYearlyObject) {
         var yearlyShiftX = 0.06
         var yearlyShiftY = 0.15
         if( isYearlyObject ) {
-            cube = createDayCubeYearly(yearlyShiftX + (col * 0.105), yearlyShiftY + (-row * 0.105), 0.11, day,month,(day + firstDayOfMonth) % 7);
+            cube = createDayCubeYearly(yearlyShiftX + (col * 0.105), yearlyShiftY + (-row * 0.105), 0.11, day,month,(day + firstDayOfMonth) % 7, year);
         }
         else {
-            cube = createDayCube(col * 0.3, -row * 0.3, 0.07, day,month,(day + firstDayOfMonth) % 7);
+            cube = createDayCube(col * 0.3, -row * 0.3, 0.07, day,month,(day + firstDayOfMonth) % 7, year);
         }
         calendar.add(cube);
     }
