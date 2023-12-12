@@ -8,9 +8,11 @@ var isYearly;
 var fontLoader = new THREE.FontLoader();
 var font;
 
-var currentWeek = getWeekNumber(new Date(currentYear, currentMonth, 1));
+
 var currentMonth = getCurrentMonth();
 var currentYear = getCurrentYear();
+var currentDay = getCurrentDay();
+var currentWeek=getWeekNumber(new Date());
 
 var circle1;
 var circle2;
@@ -312,7 +314,11 @@ function addObjects() {
     // Attach event listener to the cube color picker
     cubeColorPicker.addEventListener('input', updateCubeColor);
 }
-
+function getCurrentDay() {
+    var currentDate = new Date();
+    console.log(currentDate.getDate())
+    return currentDate.getDate();
+}
 function getCurrentYear() {
     var currentDate = new Date();
     return currentDate.getFullYear();
@@ -336,7 +342,7 @@ function positionCalendarOnFace(calendar, prism, rotationY, rotationX, distanceF
 function getDayOfYear(month, day) {
     var daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
     var dayOfYear = 0;
-    console.log(month+1);
+    console.log("current day"+currentDay)
     for (var i = 0; i <= month; i++) {
         dayOfYear += daysInMonth[i];
     }
@@ -403,21 +409,32 @@ function createDayCube(x, y, z, day, month, dayOfWeek, year, isWeeklyCalendar) {
 
     // Create text geometry for the day number
     var textGeometry;
-    if (day >= 10) {
+
         // For two-digit days
-        textGeometry = new THREE.TextGeometry(day.toString(), {
-            font: font,
-            size: 0.1,
-            height: 0.02
-        });
-    } else {
-        // For single-digit days
-        textGeometry = new THREE.TextGeometry(day.toString(), {
-            font: font,
-            size: 0.1,
-            height: 0.02
-        });
-    }
+        if(isWeeklyCalendar){
+            if(getDaysInMonth(currentYear,currentMonth+1) < day ){
+                    textGeometry = new THREE.TextGeometry((day - getDaysInMonth(currentYear, currentMonth+1)).toString(), {
+                        font: font,
+                        size: 0.1,
+                        height: 0.02
+                    });
+            }
+            else{
+                    textGeometry = new THREE.TextGeometry(day.toString(), {
+                        font: font,
+                        size: 0.1,
+                        height: 0.02
+                    });
+            }
+        }
+        else{
+                textGeometry = new THREE.TextGeometry(day.toString(), {
+                    font: font,
+                    size: 0.1,
+                    height: 0.02
+                });
+        }
+
 
     var textMesh = new THREE.Mesh(textGeometry, textMaterial);
 
@@ -537,8 +554,18 @@ function createDayCubeYearly(x, y, z, day, month, dayOfWeek, year) {
 
     return cube;
 }
+function createFirstDayOfWeek(currentday,day,dayNumber){
+    var firstDay;
+    if(currentday === 0){
+        firstDay = day-7
+    }
+    else{
+        firstDay = day - (currentday);
+    }
+    return firstDay+dayNumber;
+}
 
-function createWeeklyCalendar(year, month, isWeeklyObject) {
+function createWeeklyCalendar(year, month, day, isWeeklyObject) {
     var calendar = new THREE.Object3D();
 
     var daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -550,9 +577,12 @@ function createWeeklyCalendar(year, month, isWeeklyObject) {
     var weekYearMaterial = new THREE.MeshBasicMaterial({ color: monthNamesCol });
     var weekYearMesh;
 
+    // Use the current date within the month to calculate the week number
+    var currentDate = new Date(year, month, day); // Assuming the 1st day of the month
+    var weekNumber = currentWeek;
+    var currentDayNumber =  currentDate.getDay();
 
-
-    weekYearText = getMonthName(month)+ ' ' + 'Week ' + getWeekNumber(new Date(year, month, 1)) + ', ' + year;
+    weekYearText = getMonthName(month) + ' ' + 'Week ' + weekNumber + ', ' + year;
     weekYearGeometry = new THREE.TextGeometry(weekYearText, {
         font: font,
         size: 0.1,
@@ -564,14 +594,13 @@ function createWeeklyCalendar(year, month, isWeeklyObject) {
     calendar.add(weekYearMesh);
 
     // Display day names and numbers side by side
-    for (var day = 1; day <= 7; day++) {
-        var col = day - 1;
-
+    for (var dayNumber = 1; dayNumber <= 7; dayNumber++) {
+        var col = dayNumber - 1;
+        var firstDayOfWeek = createFirstDayOfWeek(currentDayNumber,day,dayNumber);
         // Day number
         var cube;
-
-        cube = createDayCube(0.88, -(day * 0.25)+0.4, 0.07, day, month, (col + 1) % 7, year,true);
-
+        console.log("firstDayOfWeek"+firstDayOfWeek)
+        cube = createDayCube(0.88, -(dayNumber * 0.25) + 0.4, 0.07, firstDayOfWeek, month, (col + 1) % 7, year, true);
         calendar.add(cube);
 
         // Day name
@@ -583,28 +612,30 @@ function createWeeklyCalendar(year, month, isWeeklyObject) {
 
         var textMaterial = new THREE.MeshBasicMaterial({ color: dayNamesCol });
         var textMesh = new THREE.Mesh(textGeometry, textMaterial);
-        textMesh.position.set(1.03, -(day * 0.25)+0.4, 0.1);
+        textMesh.position.set(1.03, -(dayNumber * 0.25) + 0.4, 0.1);
         textMesh.userData.isDayName = true;
         calendar.add(textMesh);
     }
 
-    circle1 = createClickableCircle(1, false,isWeeklyObject);
-    circle2 = createClickableCircle(0, false,isWeeklyObject);
+    circle1 = createClickableCircle(1, false, isWeeklyObject);
+    circle2 = createClickableCircle(0, false, isWeeklyObject);
 
     return calendar;
 }
+
 
 // Function to get the week number of a date
 function getWeekNumber(d) {
     d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+
     var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    var weekNo = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+    var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    console.log("weekNo")
+    console.log(weekNo)
+    currentWeek = weekNo;
     return weekNo;
 }
-
-
-
 
 // Function to create a monthly calendar with day names
 function createMonthlyCalendar(year, month, isYearlyObject) {
@@ -969,28 +1000,124 @@ function toggleCalendarView(type) {
         positionCalendarOnFace(currentCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
     }
     else {
-        currentCalendar = createWeeklyCalendar(currentYear,currentMonth,true);
+        currentCalendar = createWeeklyCalendar(currentYear,currentMonth,currentDay,true);
         positionCalendarOnFace(currentCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
     }
     group.add(currentCalendar); // Add the new calendar to the group
 }
 
+function getDayAndMonthFromWeek(year, weekNumber, startDayOfWeek) {
+    var date = new Date(year, 0, 1); // Initialize with the first day of the year
+    var dayOfWeek = (date.getDay() - startDayOfWeek + 7) % 7; // Adjust for starting day of the week
+
+    // Move to the first day of the target week
+    date.setDate(date.getDate() + (weekNumber - 1) * 7 - dayOfWeek);
+
+    // Get the day number within the week and the month
+    var dayNumber = date.getDate();
+    var monthNumber = date.getMonth() + 1; // Months are zero-based, so add 1
+
+    return {
+        dayNumber: dayNumber,
+        monthNumber: monthNumber
+    };
+}
+
+function getDaysInMonth(year, month) {
+    return new Date(year, month, 0).getDate();
+}
+
 function changeWeek(delta) {
+    var currentDate = new Date(currentYear, currentMonth, currentDay);
+    var currentDayNumber =  currentDate.getDay();
+    var day = createFirstDayOfWeek(currentDayNumber,currentDay,1);
+    var month;
+    var year;
+    var test=0;
     currentWeek += delta;
+    if(delta === 1){
+        console.log("getDaysInMonth(currentYear,currentMonth)")
+        console.log(getDaysInMonth(currentYear,currentMonth+1))
+        if(day+7 > getDaysInMonth(currentYear,currentMonth+1)){
+            if(currentMonth+1>11){
+                currentYear = currentYear + 1 ;
+                currentMonth = 0;
+                test = day - getDaysInMonth(currentYear,currentMonth) + 6
+                if(test === 6 ){
+                    currentDay = 1;
+                }
+                else{
+                    currentDay = 1+test;
+                }
+
+            }
+            else {
+                currentMonth = currentMonth+1
+                test = day - getDaysInMonth(currentYear,currentMonth) + 6
+                if(test === 6 ){
+                    currentDay = 1;
+                }
+                else{
+                    currentDay = 1+test;
+                }
+            }
+        }
+        else {
+            currentDay =day + delta*7;
+        }
+    }
+   else{
+        if(currentDay-7 < 1){
+            console.log(day)
+            console.log(getDaysInMonth(currentYear,currentMonth+1))
+            if(currentMonth-1<0){
+                currentYear -= 1;
+                currentMonth = 11;
+                test = getDaysInMonth(currentYear,currentMonth+1) - day
+                if(day < 7 ){
+                    currentDay = getDaysInMonth(currentYear,currentMonth+1)-(day-(day-1));
+                }
+                else{
+                    currentDay = 1+test;
+                }
+            }
+            else {
+                currentMonth = currentMonth-1;
+                test = getDaysInMonth(currentYear,currentMonth+1) - day
+                if(day < 7 ){
+                    console.log("nechaepem preco tu niesom")
+                    var skuska = day - 1;
+                    var skuska2 = day-skuska;
+                    console.log("skuska")
+                    console.log(skuska)
+                    console.log(skuska2)
+                    currentDay = getDaysInMonth(currentYear,currentMonth+1)-skuska2;
+                    console.log("test current day")
+                    console.log(currentDay)
+                }
+                else{
+                    currentDay = 1+test;
+                }
+            }
+        }
+        else {
+            currentDay =day + delta*7;
+        }
+    }
+
+   console.log(currentDay)
 
     if (currentWeek < 1) {
         currentWeek = getISOWeeksInYear(currentYear);
-        currentYear = currentYear - 1;
+        // currentYear = currentYear - 1;
     } else if (currentWeek > getISOWeeksInYear(currentYear)) {
         currentWeek = 1;
-        currentYear = currentYear + 1;
+        // currentYear = currentYear + 1;
     }
-
-    // Remove the existing calendar from the group
     group.remove(currentCalendar);
-
+    console.log(currentDay)
     // Create and add the new calendar for the updated week
-    var newCalendar = createWeeklyCalendar(currentYear, currentWeek, false);
+    var newCalendar = createWeeklyCalendar(currentYear, currentMonth, currentDay, true);
     positionCalendarOnFace(newCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
     newCalendar.name = "calendar_week_" + currentWeek;
     group.add(newCalendar); // Add the new calendar to the group
