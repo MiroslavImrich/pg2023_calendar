@@ -8,7 +8,7 @@ var isYearly;
 var fontLoader = new THREE.FontLoader();
 var font;
 
-
+var calendarType = 'yearly';
 var currentMonth = getCurrentMonth();
 var currentYear = getCurrentYear();
 var currentDay = getCurrentDay();
@@ -70,6 +70,21 @@ let specialDaysCol = '#ffffff';
 let dayNamesCol = '#000000';
 let monthNamesCol = '#000000';
 let yearNumberCol = '#000000';
+
+let calendarSettings = {
+    calendarType: calendarType,
+    cubeCol: cubeCol,
+    cubeHollidayCol: cubeHollidayCol,
+    regularDaysCol: regularDaysCol,
+    specialDaysCol: specialDaysCol,
+    dayNamesCol: dayNamesCol,
+    monthNamesCol: monthNamesCol,
+    yearNumberCol: yearNumberCol,
+    currentMonth: currentMonth,
+    currentYear: currentYear,
+    currentDay: currentDay,
+    currentWeek: currentWeek
+};
 
 document.body.appendChild(cubeColorPicker);
 document.body.appendChild(cubeHollidayColorPicker);
@@ -410,30 +425,30 @@ function createDayCube(x, y, z, day, month, dayOfWeek, year, isWeeklyCalendar) {
     // Create text geometry for the day number
     var textGeometry;
 
-        // For two-digit days
-        if(isWeeklyCalendar){
-            if(getDaysInMonth(currentYear,currentMonth+1) < day ){
-                    textGeometry = new THREE.TextGeometry((day - getDaysInMonth(currentYear, currentMonth+1)).toString(), {
-                        font: font,
-                        size: 0.1,
-                        height: 0.02
-                    });
-            }
-            else{
-                    textGeometry = new THREE.TextGeometry(day.toString(), {
-                        font: font,
-                        size: 0.1,
-                        height: 0.02
-                    });
-            }
+    // For two-digit days
+    if(isWeeklyCalendar){
+        if(getDaysInMonth(currentYear,currentMonth+1) < day ){
+            textGeometry = new THREE.TextGeometry((day - getDaysInMonth(currentYear, currentMonth+1)).toString(), {
+                font: font,
+                size: 0.1,
+                height: 0.02
+            });
         }
         else{
-                textGeometry = new THREE.TextGeometry(day.toString(), {
-                    font: font,
-                    size: 0.1,
-                    height: 0.02
-                });
+            textGeometry = new THREE.TextGeometry(day.toString(), {
+                font: font,
+                size: 0.1,
+                height: 0.02
+            });
         }
+    }
+    else{
+        textGeometry = new THREE.TextGeometry(day.toString(), {
+            font: font,
+            size: 0.1,
+            height: 0.02
+        });
+    }
 
 
     var textMesh = new THREE.Mesh(textGeometry, textMaterial);
@@ -966,13 +981,16 @@ dropdown.addEventListener('change', function () {
         if (dropdown.value === 'monthly') {
             // Change to monthly calendar
             toggleCalendarView('monthly');
+            calendarType = 'monthly';
         } else if(dropdown.value === 'yearly') {
             // Change to yearly calendar
             toggleCalendarView('yearly');
+            calendarType = 'yearly';
         }
         else {
             // Change to weekly calendar
             toggleCalendarView('weekly');
+            calendarType = 'weekly';
         }
 
         debounceTimeout = setTimeout(function () {
@@ -1067,7 +1085,7 @@ function changeWeek(delta) {
             currentDay =day + delta*7;
         }
     }
-   else{
+    else{
         if(currentDay-7 < 1){
             console.log(day)
             console.log(getDaysInMonth(currentYear,currentMonth+1))
@@ -1106,7 +1124,7 @@ function changeWeek(delta) {
         }
     }
 
-   console.log(currentDay)
+    console.log(currentDay)
 
     if (currentWeek < 1) {
         currentWeek = getISOWeeksInYear(currentYear);
@@ -1194,6 +1212,7 @@ screenshotButton.style.top = '10px';
 screenshotButton.style.left = '11rem';
 screenshotButton.style.width = '10rem';
 
+
 // Append the button to the document body
 document.body.appendChild(screenshotButton);
 
@@ -1251,4 +1270,144 @@ async function takeScreenshot() {
             downloadLink.click();
         }
     }, 'image/png');
+}
+
+// Create a button element for saving the calendar
+var saveButton = document.createElement('button');
+saveButton.textContent = 'Save Calendar';
+saveButton.style.position = 'absolute';
+saveButton.style.top = '10px';  // Adjust the position as needed
+saveButton.style.left = '21.5rem'; // Adjust the position as needed
+
+// Append the button to the document body
+document.body.appendChild(saveButton);
+
+// Register a click event listener for the save button
+saveButton.addEventListener('click', function () {
+    // Call the save function when the button is clicked
+    saveCalendar();
+});
+
+// Sample save function - replace this with your actual save logic
+function saveCalendar() {
+    let calendarSettingsToSave = {
+        calendarType: calendarType,
+        cubeCol: cubeCol,
+        cubeHollidayCol: cubeHollidayCol,
+        regularDaysCol: regularDaysCol,
+        specialDaysCol: specialDaysCol,
+        dayNamesCol: dayNamesCol,
+        monthNamesCol: monthNamesCol,
+        yearNumberCol: yearNumberCol,
+        currentMonth: currentMonth,
+        currentYear: currentYear,
+        currentDay: currentDay,
+        currentWeek: currentWeek,
+        cubeColor: cubeColorPicker.value,
+        regularDaysColor: regularDaysColorPicker.value,
+        specialDaysColor: specialDaysColorPicker.value,
+        dayNamesColorPicker: specialDaysColorPicker.value,
+        monthNamesColor: monthNamesColorPicker.value,
+        yearNumberColor: yearNumberColorPicker.value,
+        cubeHollidayColor: cubeHollidayColorPicker.value,
+        pyramidColor:pyramidColorPicker.value,
+    };
+
+    // Convert the settings to a JSON string
+    var settingsString = JSON.stringify(calendarSettingsToSave, null, 2); // The third argument (2) adds indentation for readability
+
+    // Create a Blob containing the JSON data
+    var blob = new Blob([settingsString], { type: 'application/json' });
+
+    // Create a download link
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'calendar_settings.json';
+
+    // Append the link to the document
+    document.body.appendChild(link);
+
+    // Trigger a click on the link to start the download
+    link.click();
+
+    // Remove the link from the document
+    document.body.removeChild(link);
+
+    console.log('Calendar settings saved to JSON file successfully!');
+}
+
+// Create an input element for loading the calendar settings from a file
+var loadInput = document.createElement('input');
+loadInput.type = 'file';
+loadInput.name = 'nazovInputu';
+loadInput.style.position = 'absolute';
+loadInput.style.top = '10px';
+loadInput.style.left = '28.5rem';
+loadInput.style.fontSize = '0'; // Skryje textový obsah v prehliadačiach
+
+loadInput.addEventListener('change', function () {
+    loadCalendarSettings(loadInput);
+});
+
+// Append the file input to the document body
+document.body.appendChild(loadInput);
+
+// Create a button element with text "Load"
+var loadButton = document.createElement('button');
+loadButton.textContent = 'Load calendar';
+loadButton.style.position = 'absolute';
+loadButton.style.top = '10px';
+loadButton.style.left = '28.5rem';
+loadButton.style.cursor = 'pointer'; // Zmení kurzor na ruku
+
+// Add an event listener to the button for triggering the file input
+loadButton.addEventListener('click', function () {
+    loadInput.click();
+});
+
+// Append the button to the document body
+document.body.appendChild(loadButton);
+
+function loadCalendarSettings(input) {
+    if (input.files.length > 0) {
+        var file = input.files[0];
+        var reader = new FileReader();
+
+        reader.onload = function (e) {
+            try {
+                var calendarSettings = JSON.parse(e.target.result);
+                updateCalendarSettings(calendarSettings);
+                console.log('Calendar settings loaded successfully!');
+            } catch (error) {
+                console.error('Error parsing JSON:', error);
+            }
+        };
+
+        reader.readAsText(file);
+    }
+}
+
+
+// Example function to update calendar settings
+function updateCalendarSettings(settings) {
+    calendarType = settings.calendarType;
+    cubeCol = settings.cubeCol;
+    cubeHollidayCol = settings.cubeHollidayCol;
+    regularDaysCol = settings.regularDaysCol;
+    specialDaysCol = settings.specialDaysCol;
+    dayNamesCol = settings.dayNamesCol;
+    monthNamesCol = settings.monthNamesCol;
+    yearNumberCol = settings.yearNumberCol;
+    currentMonth = settings.currentMonth;
+    currentYear = settings.currentYear;
+    currentDay = settings.currentDay;
+    currentWeek = settings.currentWeek;
+    cubeColorPicker.value = settings.cubeColor;
+    regularDaysColorPicker.value = settings.regularDaysColor;
+    specialDaysColorPicker.value = settings.specialDaysColor;
+    monthNamesColorPicker.value = settings.monthNamesColor;
+    yearNumberColorPicker.value = settings.yearNumberColor;
+    cubeHollidayColorPicker.value = settings.cubeHollidayColor;
+    pyramidColorPicker.value = settings.pyramidColor;
+    toggleCalendarView(calendarType);
 }
