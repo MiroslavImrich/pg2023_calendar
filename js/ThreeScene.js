@@ -565,6 +565,7 @@ function createFirstDayOfWeek(currentday,day,dayNumber){
     return firstDay+dayNumber;
 }
 
+
 function createWeeklyCalendar(year, month, day, isWeeklyObject) {
     var calendar = new THREE.Object3D();
 
@@ -579,7 +580,7 @@ function createWeeklyCalendar(year, month, day, isWeeklyObject) {
 
     // Use the current date within the month to calculate the week number
     var currentDate = new Date(year, month, day); // Assuming the 1st day of the month
-    var weekNumber = currentWeek;
+    var weekNumber = getWeekNumber(currentDate);
     var currentDayNumber =  currentDate.getDay();
 
     weekYearText = getMonthName(month) + ' ' + 'Week ' + weekNumber + ', ' + year;
