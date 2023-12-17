@@ -1,10 +1,8 @@
 var camera, scene, renderer, controls;
 var group;
 var prismMesh;
-var currentCalendar; // Store a reference to the current calendar
+var currentCalendar;
 var isYearly;
-
-// Load the font
 var fontLoader = new THREE.FontLoader();
 var font;
 
@@ -17,11 +15,9 @@ var currentWeek=getWeekNumber(new Date());
 var circle1;
 var circle2;
 
-// The path should point to the location of droid_sans_regular.typeface.json in your project
 fontLoader.load('./js/font/droid_sans_regular.typeface.json', function (loadedFont) {
     font = loadedFont;
 
-    // Call the initialization function after the font is loaded
     init();
     render();
 });
@@ -53,7 +49,6 @@ function init() {
     scene.add( sphere );
 }
 
-// Create the color picker element
 var cubeColorPicker = createColorPicker('cubeColorPicker', '240px', 'Cube Color:', '#cccccc');
 var cubeHollidayColorPicker = createColorPicker('cubeHollidayColorPicker', '280px', 'Cube Color Holliday:', '#ff0000');
 var pyramidColorPicker = createColorPicker('pyramidColorPicker', '320px', 'Pyramid Color:', '#dddddd');
@@ -95,9 +90,6 @@ document.body.appendChild(regularDaysColorPicker);
 document.body.appendChild(specialDaysColorPicker);
 document.body.appendChild(monthNamesColorPicker);
 
-
-// Attach event listeners to the color pickers
-
 cubeColorPicker.addEventListener('input', updateCubeColor);
 regularDaysColorPicker.addEventListener('input', updateRegularDaysColor);
 specialDaysColorPicker.addEventListener('input', updateSpecialDaysColor);
@@ -108,26 +100,23 @@ cubeHollidayColorPicker.addEventListener('input', updateHollidayCubeColor);
 pyramidColorPicker.addEventListener('input', updatePyramidColor);
 
 
-// Function to create a color picker element
 function createColorPicker(id, position, labelText, defaultColor) {
     var container = document.createElement('div');
 
-    // Create a label element
     var label = document.createElement('label');
     label.textContent = labelText;
     label.style.position = 'absolute';
-    label.style.width = '120px'; // Adjust the width as needed
+    label.style.width = '120px';
     label.style.top = position;
 
     container.appendChild(label);
 
-    // Create a color picker element
     var colorPicker = document.createElement('input');
     colorPicker.type = 'color';
     colorPicker.id = id;
     colorPicker.style.position = 'absolute';
     colorPicker.style.top = position;
-    colorPicker.style.left = '140px'; // Adjust the left position as needed
+    colorPicker.style.left = '140px';
     colorPicker.value = defaultColor;
     container.appendChild(colorPicker);
 
@@ -139,17 +128,14 @@ function createColorPicker(id, position, labelText, defaultColor) {
 function updatePyramidColor() {
     var newColor = pyramidColorPicker.value;
 
-    // Aktualizujte farbu vonkajšieho materiálu prizmy
     prismMesh.material[0].color.set(colorToThreeJSColor(newColor));
 }
 
 function updateCubeColor() {
     var newColor = cubeColorPicker.value;
     var isRegularDay = false;
-    console.log("zacinam");
     cubeCol = newColor;
 
-    // Update the color of the cube in the calendar
     group.traverse(function (child) {
         if (child instanceof THREE.Mesh) {
             if (child.userData.isCube) {
@@ -157,7 +143,6 @@ function updateCubeColor() {
                 var month = child.userData.month;
                 var dayOfWeek = child.userData.dayOfWeek;
                 if (!(isHoliday(day, month) || dayOfWeek === 0)) {
-                    console.log("som tu")
                     child.material.color.set(colorToThreeJSColor(newColor));
                 }
             }
@@ -168,10 +153,8 @@ function updateCubeColor() {
 function updateHollidayCubeColor() {
     var newColor = cubeHollidayColorPicker.value;
     var isRegularDay = false;
-    console.log("zacinam");
     cubeHollidayCol = newColor;
 
-    // Update the color of the cube in the calendar
     group.traverse(function (child) {
         if (child instanceof THREE.Mesh) {
             if (child.userData.isCube) {
@@ -179,7 +162,6 @@ function updateHollidayCubeColor() {
                 var month = child.userData.month;
                 var dayOfWeek = child.userData.dayOfWeek;
                 if (isHoliday(day, month) || dayOfWeek === 0) {
-                    console.log("som tu")
                     child.material.color.set(colorToThreeJSColor(newColor));
                 }
             }
@@ -191,7 +173,6 @@ function updateDayNamesColor() {
     var newColor = dayNamesColorPicker.value;
     dayNamesCol = newColor;
 
-    // Update the color of day names in the calendar
     group.traverse(function (child) {
         if (child instanceof THREE.Mesh && child.userData.isDayName) {
             child.material.color.set(colorToThreeJSColor(newColor));
@@ -202,7 +183,6 @@ function updateYearNumberColor() {
     var newColor = yearNumberColorPicker.value;
     yearNumberCol = newColor;
 
-    // Update the color of the year number in the calendar
     group.traverse(function (child) {
         if (child instanceof THREE.Mesh && child.userData.isYearNumber) {
             child.material.color.set(colorToThreeJSColor(newColor));
@@ -213,7 +193,6 @@ function updateMonthNamesColor() {
     var newColor = monthNamesColorPicker.value;
     monthNamesCol = newColor;
 
-    // Update the color of month names in the calendar
     group.traverse(function (child) {
         if (child instanceof THREE.Mesh && child.userData.isMonthName) {
             child.material.color.set(colorToThreeJSColor(newColor));
@@ -221,7 +200,6 @@ function updateMonthNamesColor() {
     });
 }
 
-// Function to update text color based on the main color picker value
 function updateTextColor() {
     updateColorForDays(mainColorPicker, false, false, true);
 
@@ -230,12 +208,10 @@ function updateRegularDaysColor() {
     updateColorForDays(regularDaysColorPicker, false, false, true);
 }
 
-// Function to update text color based on the special days color picker value
 function updateSpecialDaysColor() {
     updateColorForDays(specialDaysColorPicker, true, true);
 }
 
-// Function to update text color based on the specified color picker value
 function updateColorForDays(colorPicker, includeHolidays = false, includeSundays = false, includeRegularDays = false) {
     var newColor = colorPicker.value;
     if(includeHolidays === true){
@@ -245,8 +221,6 @@ function updateColorForDays(colorPicker, includeHolidays = false, includeSundays
         regularDaysCol = newColor;
     }
 
-
-    // Update the color of existing text meshes for selected days
     group.traverse(function (child) {
         if (child instanceof THREE.Mesh && child.userData.isText) {
             var day = child.userData.day;
@@ -259,19 +233,6 @@ function updateColorForDays(colorPicker, includeHolidays = false, includeSundays
         }
     });
 }
-
-
-
-// Function to update text color based on the color picker value
-// Add a variable to store the current text color
-var textColor = '#000000';
-
-// Function to update text color based on the color picker value
-// Function to update text color based on the color picker value
-
-
-
-// Convert hex color to Three.js color format
 function colorToThreeJSColor(hexColor) {
     var color = new THREE.Color();
     color.set(hexColor);
@@ -288,21 +249,17 @@ function render() {
 function addObjects() {
     group = new THREE.Group();
 
-    // Create the triangular prism geometry
     var geometryPrism = new THREE.CylinderGeometry(1.4, 1.4, 3, 3);
 
-    // Create the material for the outer faces
     var materialOuter = new THREE.MeshBasicMaterial({
         color: 0xdddddd,
         side: THREE.DoubleSide
     });
 
-    // Create the material for the inner faces
     var materialInner = new THREE.MeshBasicMaterial({
         visible: false
     });
 
-    // Assign UV coordinates to the geometry for proper texture mapping
     geometryPrism.faceVertexUvs[0] = [];
     geometryPrism.faceVertexUvs[0].push([
         new THREE.Vector2(0, 0),
@@ -310,7 +267,6 @@ function addObjects() {
         new THREE.Vector2(0, 1)
     ]);
 
-    // Create the triangular prism mesh
     prismMesh = new THREE.Mesh(geometryPrism, [materialOuter, materialInner]);
     prismMesh.position.set(0, 0.2, 0);
     prismMesh.rotation.x = -Math.PI / 2;
@@ -320,18 +276,12 @@ function addObjects() {
     positionCalendarOnFace(currentCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
     group.add(currentCalendar);
 
-    // Add the group to the scene
     scene.add(group);
-
-    // Append the cube color picker to the document body
     document.body.appendChild(cubeColorPicker);
-
-    // Attach event listener to the cube color picker
     cubeColorPicker.addEventListener('input', updateCubeColor);
 }
 function getCurrentDay() {
     var currentDate = new Date();
-    console.log(currentDate.getDate())
     return currentDate.getDate();
 }
 function getCurrentYear() {
@@ -345,7 +295,7 @@ function getCurrentMonth() {
 }
 
 function positionCalendarOnFace(calendar, prism, rotationY, rotationX, distanceFromCenterX, distanceFromCenterY, distanceFromCenterZ) {
-    var faceCenter = new THREE.Vector3(distanceFromCenterX, 0.2 + distanceFromCenterY, 1.5 + distanceFromCenterZ); // Upravte hodnoty podle potřeby
+    var faceCenter = new THREE.Vector3(distanceFromCenterX, 0.2 + distanceFromCenterY, 1.5 + distanceFromCenterZ);
     var quaternionY = new THREE.Quaternion();
     quaternionY.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rotationY);
     var quaternionX = new THREE.Quaternion();
@@ -357,7 +307,6 @@ function positionCalendarOnFace(calendar, prism, rotationY, rotationX, distanceF
 function getDayOfYear(month, day) {
     var daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
     var dayOfYear = 0;
-    console.log("current day"+currentDay)
     for (var i = 0; i <= month; i++) {
         dayOfYear += daysInMonth[i];
     }
@@ -415,17 +364,10 @@ function createDayCube(x, y, z, day, month, dayOfWeek, year, isWeeklyCalendar) {
     if (dayOfWeek === 0 || isHoliday(day, month) || (day === 2 && month === 1 && year === 2024)) {
         cubeColor = cubeHollidayCol;
     }
-
-    // Vytvořte samostatný materiál pro text
     var textColor = (dayOfWeek === 0 || isHoliday(day, month) || (day === 2 && month === 1 && year === 2024)) ? specialDaysCol : regularDaysCol;
-
-    // Create a separate material for the text
     var textMaterial = new THREE.MeshBasicMaterial({ color: textColor });
-
-    // Create text geometry for the day number
     var textGeometry;
 
-    // For two-digit days
     if(isWeeklyCalendar){
         if(getDaysInMonth(currentYear,currentMonth+1) < day ){
             textGeometry = new THREE.TextGeometry((day - getDaysInMonth(currentYear, currentMonth+1)).toString(), {
@@ -450,22 +392,20 @@ function createDayCube(x, y, z, day, month, dayOfWeek, year, isWeeklyCalendar) {
         });
     }
 
-
     var textMesh = new THREE.Mesh(textGeometry, textMaterial);
 
-    // Set position to align the day numbers to the left
     if (!isWeeklyCalendar) {
         if (day >= 10) {
-            textMesh.position.set(-0.07, -0.05, 0.02); // For two-digit days
+            textMesh.position.set(-0.07, -0.05, 0.02);
         } else {
-            textMesh.position.set(-0.05, -0.05, 0.02); // For single-digit days
+            textMesh.position.set(-0.05, -0.05, 0.02);
         }
     }
     else{
         if (day >= 10) {
-            textMesh.position.set(-0.52, -0.05, 0.02); // For two-digit days
+            textMesh.position.set(-0.52, -0.05, 0.02);
         } else {
-            textMesh.position.set(-0.5, -0.05, 0.02); // For single-digit days
+            textMesh.position.set(-0.5, -0.05, 0.02);
         }
     }
 
@@ -485,10 +425,8 @@ function createDayCube(x, y, z, day, month, dayOfWeek, year, isWeeklyCalendar) {
 
 
     if (isWeeklyCalendar) {
-        // Display Slovak names next to the day numbers in a weekly calendar
-        nameMesh.position.set(0.15, -0.05, 0.02); // Adjusted position for weekly calendar
+        nameMesh.position.set(0.15, -0.05, 0.02);
     } else {
-        // Display Slovak names under the day numbers in a monthly calendar
         nameMesh.position.set(-nameMesh.geometry.boundingBox.max.x / 2, -0.13, 0.02);
     }
 
@@ -496,31 +434,26 @@ function createDayCube(x, y, z, day, month, dayOfWeek, year, isWeeklyCalendar) {
     var cube;
 
     if (isWeeklyCalendar) {
-        // Increase the width for the weekly calendar
         cube = new THREE.Mesh(new THREE.BoxGeometry(2, 0.25, 0.05), material);
     } else {
-        // Default width for monthly calendar
         cube = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.05), material);
     }
 
     cube.add(textMesh);
-    cube.add(nameMesh); // Add the name mesh to the cube
+    cube.add(nameMesh);
     cube.position.set(x, y, z);
 
-    // Set userData properties
     textMesh.userData.isText = true;
     cube.userData.isCube = true;
     cube.userData.day = day;
     cube.userData.month = month;
     cube.userData.dayOfWeek = dayOfWeek;
-    cube.userData.name = name; // Add name to cube userData
+    cube.userData.name = name;
     textMesh.userData.day = day;
     textMesh.userData.month = month;
     textMesh.userData.dayOfWeek = dayOfWeek;
 
-    // Set the initial text color
     textMesh.material.color.set(colorToThreeJSColor(textColor));
-
     return cube;
 }
 
@@ -532,13 +465,9 @@ function createDayCubeYearly(x, y, z, day, month, dayOfWeek, year) {
         cubeColor = cubeHollidayCol;
     }
 
-    // Vytvořte samostatný materiál pro text
     var textColor = (dayOfWeek === 0 || isHoliday(day, month) || (day === 2 && month === 1 && year === 2024)) ? specialDaysCol : regularDaysCol;
-
-    // Create a separate material for the text
     var textMaterial = new THREE.MeshBasicMaterial({ color: textColor });
 
-    // Create text geometry for the day number
     var textGeometry = new THREE.TextGeometry(day.toString(), {
         font: font,
         size: 0.03,
@@ -554,7 +483,6 @@ function createDayCubeYearly(x, y, z, day, month, dayOfWeek, year) {
     cube.add(textMesh);
     cube.position.set(x, y, z);
 
-    // Set userData properties
     textMesh.userData.isText = true;
     cube.userData.isCube = true;
     cube.userData.day = day;
@@ -564,9 +492,7 @@ function createDayCubeYearly(x, y, z, day, month, dayOfWeek, year) {
     textMesh.userData.month = month;
     textMesh.userData.dayOfWeek = dayOfWeek;
 
-    // Set the initial text color
     textMesh.material.color.set(colorToThreeJSColor(textColor));
-
     return cube;
 }
 function createFirstDayOfWeek(currentday,day,dayNumber){
@@ -580,7 +506,6 @@ function createFirstDayOfWeek(currentday,day,dayNumber){
     return firstDay+dayNumber;
 }
 
-
 function createWeeklyCalendar(year, month, day, isWeeklyObject) {
     var calendar = new THREE.Object3D();
 
@@ -593,8 +518,7 @@ function createWeeklyCalendar(year, month, day, isWeeklyObject) {
     var weekYearMaterial = new THREE.MeshBasicMaterial({ color: monthNamesCol });
     var weekYearMesh;
 
-    // Use the current date within the month to calculate the week number
-    var currentDate = new Date(year, month, day); // Assuming the 1st day of the month
+    var currentDate = new Date(year, month, day);
     var weekNumber = getWeekNumber(currentDate);
     var currentDayNumber =  currentDate.getDay();
 
@@ -609,17 +533,13 @@ function createWeeklyCalendar(year, month, day, isWeeklyObject) {
     weekYearMesh.userData.isWeekNumber = true;
     calendar.add(weekYearMesh);
 
-    // Display day names and numbers side by side
     for (var dayNumber = 1; dayNumber <= 7; dayNumber++) {
         var col = dayNumber - 1;
         var firstDayOfWeek = createFirstDayOfWeek(currentDayNumber,day,dayNumber);
-        // Day number
         var cube;
-        console.log("firstDayOfWeek"+firstDayOfWeek)
         cube = createDayCube(0.88, -(dayNumber * 0.25) + 0.4, 0.07, firstDayOfWeek, month, (col + 1) % 7, year, true);
         calendar.add(cube);
 
-        // Day name
         var textGeometry = new THREE.TextGeometry(rearrangedDaysOfWeek[col], {
             font: font,
             size: 0.05,
@@ -639,30 +559,21 @@ function createWeeklyCalendar(year, month, day, isWeeklyObject) {
     return calendar;
 }
 
-
-// Function to get the week number of a date
 function getWeekNumber(d) {
     d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
 
     var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
     var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-    console.log("weekNo")
-    console.log(weekNo)
     currentWeek = weekNo;
     return weekNo;
 }
 
-// Function to create a monthly calendar with day names
 function createMonthlyCalendar(year, month, isYearlyObject) {
     var calendar = new THREE.Object3D();
-
     var daysInMonth = new Date(year, month + 1, 0).getDate();
-
     var daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
     var firstDayOfMonth = new Date(year, month, 0).getDay();
-
     var rearrangedDaysOfWeek = daysOfWeek.slice(0).concat(daysOfWeek.slice(0, 0));
 
     var monthYearText;
@@ -760,25 +671,18 @@ function isHoliday(day, month) {
     return holidays[month] && holidays[month].includes(day);
 }
 
-// Function to create a monthly calendar with day names
-// Function to create a yearly calendar with monthly calendars
 function createYearlyCalendar(year) {
     var yearlyCalendar = new THREE.Object3D();
 
     var calendarsInRow = 4;
-    var calendarSpacing = 0.2; // Adjust the spacing between calendars as needed
+    var calendarSpacing = 0.2;
 
     for (var month = 0; month < 12; month++) {
         var calendar = createMonthlyCalendar(year, month, true);
 
-        // Adjust the scale of each monthly calendar
-        calendar.scale.set(0.5, 0.5, 0.5); // Adjust the scale factor as needed
-
-        // Calculate the row and column for each calendar
+        calendar.scale.set(0.5, 0.5, 0.5);
         var row = Math.floor(month / calendarsInRow);
         var col = month % calendarsInRow;
-
-        // Adjust the position to arrange calendars in a grid
         calendar.position.set(col * (calendarSpacing + 0.25), -row * (calendarSpacing + 0.4), 0);
 
         yearlyCalendar.add(calendar);
@@ -814,16 +718,12 @@ function getMonthName(month) {
     return months[month];
 }
 
-// Create an array to store the created balls
 var balls = [];
 
-// Set up raycasting for mouse picking
 var raycaster = new THREE.Raycaster();
 var mouse = new THREE.Vector2();
 
-// Register global click event listener
 window.addEventListener('click', function () {
-    // Perform raycasting on click
     raycaster.setFromCamera(mouse, camera);
     var intersects = raycaster.intersectObjects(balls, true);
 
@@ -833,24 +733,19 @@ window.addEventListener('click', function () {
             ball.userData.isClickEnabled = false;
             setTimeout(function () {
                 ball.userData.isClickEnabled = true;
-            }, 500); // Set a timeout in milliseconds to control the click rate
-            // Trigger the click event for the ball
+            }, 500);
             ball.dispatchEvent({ type: 'click' });
         }
     }
 });
 
-// Global mouse move event listener
 window.addEventListener('mousemove', function (event) {
-    // Update the mouse coordinates
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-    // Perform raycasting on mouse move
     raycaster.setFromCamera(mouse, camera);
     var intersects = raycaster.intersectObjects(balls, true);
 
-    // Change cursor style on mouse over
     if (intersects.length > 0) {
         renderer.domElement.style.cursor = 'pointer';
     } else {
@@ -859,19 +754,13 @@ window.addEventListener('mousemove', function (event) {
 });
 
 function createClickableCircle(direction,isYearly,isWeekly) {
-    // Create a parent container
     var container = new THREE.Object3D();
-
     var circleGeometry = new THREE.CircleGeometry(0.10, 32);
     var circleMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc, side: THREE.DoubleSide });
     var circleMesh = new THREE.Mesh(circleGeometry, circleMaterial);
-    // Rotate the circle by 90 degrees
 
     circleMesh.rotation.set(Math.PI / 2, -Math.PI / 3, 0);
 
-
-
-    // Set up event listeners for each ball
     circleMesh.userData = {
         isClickEnabled: true,
         onClick: function () {
@@ -890,7 +779,6 @@ function createClickableCircle(direction,isYearly,isWeekly) {
         }
     };
 
-    // Add event listeners for mouse events
     circleMesh.addEventListener('click', function () {
         if (circleMesh.userData.onClick) {
             circleMesh.userData.onClick();
@@ -899,51 +787,37 @@ function createClickableCircle(direction,isYearly,isWeekly) {
 
     container.add(circleMesh);
 
-    // Create an arrow helper (pointing to the right in this case)
     function createArrowMesh(direction) {
-        // Vytvořte materiál pro šipku s texturou
         var arrowMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide });
-
-        // Vytvořte textovou geometrii pro šipku
         var arrowGeometry = new THREE.TextGeometry(direction, {
             font: font,
             size: 0.1,
             height: 0.0
         });
-
-        // Vytvořte mesh pro šipku s použitím textové geometrie a materiálu
         var arrowMesh = new THREE.Mesh(arrowGeometry, arrowMaterial);
 
         return arrowMesh;
     }
 
-// Vytvořte šipky
     var leftArrow = createArrowMesh("<");
     var rightArrow = createArrowMesh(">");
+    leftArrow.rotation.set(Math.PI / 2, -Math.PI / 3, Math.PI / 2);
+    leftArrow.position.set(0.67, 0.47, -1.35);
 
-// Nastavte rotaci a pozici pro šipky
-    leftArrow.rotation.set(Math.PI / 2, -Math.PI / 3, Math.PI / 2); // Přizpůsobte hodnoty podle potřeby
-    leftArrow.position.set(0.67, 0.47, -1.35); // Přizpůsobte hodnoty podle potřeby
+    rightArrow.rotation.set(Math.PI / 2, -Math.PI / 3, Math.PI / 2);
+    rightArrow.position.set(0.67, 0.47, 1.27);
 
-    rightArrow.rotation.set(Math.PI / 2, -Math.PI / 3, Math.PI / 2); // Přizpůsobte hodnoty podle potřeby
-    rightArrow.position.set(0.67, 0.47, 1.27); // Přizpůsobte hodnoty podle potřeby
-
-// Přidejte meshy do scény
     scene.add(leftArrow);
     scene.add(rightArrow);
-
-    // Move the container to a new position
 
     if (direction === 1) container.position.set(0.65, 0.5, -1.3);
     else if (direction === 0) container.position.set(0.65, 0.5, 1.3);
 
     scene.add(container);
 
-    // Add the ball to the array
     balls.push(circleMesh);
     return container;
 }
-// Create a select element (dropdown)
 var dropdown = document.createElement('select');
 dropdown.style.position = 'absolute';
 dropdown.style.top = '10px';
@@ -951,7 +825,6 @@ dropdown.style.left = '0.5rem';
 dropdown.style.width = '10rem';
 dropdown.style.height = '1.3rem';
 
-// Add options to the dropdown
 var monthlyOption = document.createElement('option');
 monthlyOption.text = 'Monthly calendar';
 monthlyOption.value = 'monthly';
@@ -966,55 +839,41 @@ var weeklyOption = document.createElement('option');
 weeklyOption.text = 'Weekly calendar';
 weeklyOption.value = 'weekly';
 dropdown.add(weeklyOption);
-
 dropdown.selectedIndex = 1;
-
-// Append the container to the document body
 document.body.appendChild(dropdown);
 
-// Register a click event listener for the button
 var debounceTimeout;
 dropdown.addEventListener('change', function () {
     if (!debounceTimeout) {
 
-        // Check the selected value of the dropdown
         if (dropdown.value === 'monthly') {
-            // Change to monthly calendar
             toggleCalendarView('monthly');
             calendarType = 'monthly';
         } else if(dropdown.value === 'yearly') {
-            // Change to yearly calendar
             toggleCalendarView('yearly');
             calendarType = 'yearly';
         }
         else {
-            // Change to weekly calendar
             toggleCalendarView('weekly');
             calendarType = 'weekly';
         }
-
         debounceTimeout = setTimeout(function () {
             debounceTimeout = null;
-        }, 1000); // Set the timeout duration (in milliseconds)
+        }, 1000);
     }
 });
 
-// Initialize isYearly property for the initial calendar
 isYearly = false;
-
 function toggleCalendarView(type) {
-    // Remove the existing calendar from the group
     group.remove(currentCalendar);
     balls = [];
     scene.remove(circle1);
     scene.remove(circle2);
 
     if (type === "monthly") {
-        // Toggle to monthly view
         currentCalendar = createMonthlyCalendar(currentYear, currentMonth, false);
         positionCalendarOnFace(currentCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
     } else if (type === "yearly") {
-        // Toggle to yearly view
         currentCalendar = createYearlyCalendar(currentYear);
         positionCalendarOnFace(currentCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
     }
@@ -1022,24 +881,7 @@ function toggleCalendarView(type) {
         currentCalendar = createWeeklyCalendar(currentYear,currentMonth,currentDay,true);
         positionCalendarOnFace(currentCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
     }
-    group.add(currentCalendar); // Add the new calendar to the group
-}
-
-function getDayAndMonthFromWeek(year, weekNumber, startDayOfWeek) {
-    var date = new Date(year, 0, 1); // Initialize with the first day of the year
-    var dayOfWeek = (date.getDay() - startDayOfWeek + 7) % 7; // Adjust for starting day of the week
-
-    // Move to the first day of the target week
-    date.setDate(date.getDate() + (weekNumber - 1) * 7 - dayOfWeek);
-
-    // Get the day number within the week and the month
-    var dayNumber = date.getDate();
-    var monthNumber = date.getMonth() + 1; // Months are zero-based, so add 1
-
-    return {
-        dayNumber: dayNumber,
-        monthNumber: monthNumber
-    };
+    group.add(currentCalendar);
 }
 
 function getDaysInMonth(year, month) {
@@ -1055,8 +897,6 @@ function changeWeek(delta) {
     var test=0;
     currentWeek += delta;
     if(delta === 1){
-        console.log("getDaysInMonth(currentYear,currentMonth)")
-        console.log(getDaysInMonth(currentYear,currentMonth+1))
         if(day+7 > getDaysInMonth(currentYear,currentMonth+1)){
             if(currentMonth+1>11){
                 currentYear = currentYear + 1 ;
@@ -1087,8 +927,7 @@ function changeWeek(delta) {
     }
     else{
         if(currentDay-7 < 1){
-            console.log(day)
-            console.log(getDaysInMonth(currentYear,currentMonth+1))
+
             if(currentMonth-1<0){
                 currentYear -= 1;
                 currentMonth = 11;
@@ -1104,15 +943,10 @@ function changeWeek(delta) {
                 currentMonth = currentMonth-1;
                 test = getDaysInMonth(currentYear,currentMonth+1) - day
                 if(day < 7 ){
-                    console.log("nechaepem preco tu niesom")
                     var skuska = day - 1;
                     var skuska2 = day-skuska;
-                    console.log("skuska")
-                    console.log(skuska)
-                    console.log(skuska2)
+
                     currentDay = getDaysInMonth(currentYear,currentMonth+1)-skuska2;
-                    console.log("test current day")
-                    console.log(currentDay)
                 }
                 else{
                     currentDay = 1+test;
@@ -1124,23 +958,18 @@ function changeWeek(delta) {
         }
     }
 
-    console.log(currentDay)
-
     if (currentWeek < 1) {
         currentWeek = getISOWeeksInYear(currentYear);
-        // currentYear = currentYear - 1;
     } else if (currentWeek > getISOWeeksInYear(currentYear)) {
         currentWeek = 1;
-        // currentYear = currentYear + 1;
     }
     group.remove(currentCalendar);
-    console.log(currentDay)
-    // Create and add the new calendar for the updated week
+
     var newCalendar = createWeeklyCalendar(currentYear, currentMonth, currentDay, true);
     positionCalendarOnFace(newCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
     newCalendar.name = "calendar_week_" + currentWeek;
-    group.add(newCalendar); // Add the new calendar to the group
-    currentCalendar = newCalendar; // Update the reference to the current calendar
+    group.add(newCalendar);
+    currentCalendar = newCalendar;
 }
 
 function getISOWeeksInYear(year) {
@@ -1148,26 +977,21 @@ function getISOWeeksInYear(year) {
     var week = getISOWeek(d);
 
     if (week == 1) {
-        // Check if the last day of the year is in the first week of the next year
         var nextYear = new Date(year + 1, 0, 1);
         if (getISOWeek(d) == 1) {
             return 52;
         }
     }
-
     return week;
 }
 
 function getISOWeek(date) {
-    // This algorithm is based on the ISO Week Date system
-    // Source: https://en.wikipedia.org/wiki/ISO_week_date#Calculating_the_week_number_of_a_given_date
     var dayOfWeek = date.getUTCDay() || 7;
     date.setUTCDate(date.getUTCDate() + 4 - dayOfWeek);
     var yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
     var weekNumber = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
     return weekNumber;
 }
-
 
 function changeMonth(delta) {
     currentMonth += delta;
@@ -1179,32 +1003,25 @@ function changeMonth(delta) {
         currentYear = currentYear + 1;
     }
 
-    // Remove the existing calendar from the group
-    // group.remove(scene.getObjectByName("calendar_" + currentMonth));
     group.remove(currentCalendar);
 
-    // Create and add the new calendar for the updated month
     var newCalendar = createMonthlyCalendar(currentYear, currentMonth, false);
     positionCalendarOnFace(newCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
     newCalendar.name = "calendar_" + currentMonth;
-    group.add(newCalendar); // Add the new calendar to the group
-    currentCalendar = newCalendar; // Update the reference to the current calendar
+    group.add(newCalendar);
+    currentCalendar = newCalendar;
 }
 
 function changeYear(delta) {
     currentYear += delta;
-    // Remove the existing calendar from the group
-    // group.remove(scene.getObjectByName("calendar_" + currentMonth));
     group.remove(currentCalendar);
-    // Create and add the new calendar for the updated month
     var newCalendar = createYearlyCalendar(currentYear);
     positionCalendarOnFace(newCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
     newCalendar.name = "calendar_" + currentMonth;
-    group.add(newCalendar); // Add the new calendar to the group
-    currentCalendar = newCalendar; // Update the reference to the current calendar
+    group.add(newCalendar);
+    currentCalendar = newCalendar;
 }
 
-// Create a button element
 var screenshotButton = document.createElement('button');
 screenshotButton.textContent = 'Take Screenshot';
 screenshotButton.style.position = 'absolute';
@@ -1212,37 +1029,26 @@ screenshotButton.style.top = '10px';
 screenshotButton.style.left = '11rem';
 screenshotButton.style.width = '10rem';
 
-
-// Append the button to the document body
 document.body.appendChild(screenshotButton);
 
-// Register a click event listener for the button
 screenshotButton.addEventListener('click', function () {
     takeScreenshot();
 });
 
 async function takeScreenshot() {
-    // Create a canvas element to render the screenshot
     var screenshotCanvas = document.createElement('canvas');
     var width = window.innerWidth;
     var height = window.innerHeight;
 
-    // Set the canvas size to match the window size
     screenshotCanvas.width = width;
     screenshotCanvas.height = height;
 
-    // Get the rendering context
     var context = screenshotCanvas.getContext('2d');
-
-    // Render the current scene to the canvas
     renderer.render(scene, camera);
 
-    // Copy the rendered image from the WebGL renderer to the canvas
     context.drawImage(renderer.domElement, 0, 0, width, height);
 
-    // Convert the canvas content to a Blob representing a PNG image
     screenshotCanvas.toBlob(async function (blob) {
-        // Use showSaveFilePicker if available
         if ('showSaveFilePicker' in window) {
             const handle = await window.showSaveFilePicker({
                 suggestedName: 'screenshot.png',
@@ -1258,37 +1064,29 @@ async function takeScreenshot() {
             await writable.write(blob);
             await writable.close();
         } else {
-            // If showSaveFilePicker is not available, fallback to traditional download
             var dataURL = URL.createObjectURL(blob);
 
-            // Create a download link for the screenshot
             var downloadLink = document.createElement('a');
             downloadLink.href = dataURL;
             downloadLink.download = 'screenshot.png';
 
-            // Trigger a click event on the download link to prompt the user to save the screenshot
             downloadLink.click();
         }
     }, 'image/png');
 }
 
-// Create a button element for saving the calendar
 var saveButton = document.createElement('button');
 saveButton.textContent = 'Save Calendar';
 saveButton.style.position = 'absolute';
-saveButton.style.top = '10px';  // Adjust the position as needed
-saveButton.style.left = '21.5rem'; // Adjust the position as needed
+saveButton.style.top = '10px';
+saveButton.style.left = '21.5rem';
 
-// Append the button to the document body
 document.body.appendChild(saveButton);
 
-// Register a click event listener for the save button
 saveButton.addEventListener('click', function () {
-    // Call the save function when the button is clicked
     saveCalendar();
 });
 
-// Sample save function - replace this with your actual save logic
 function saveCalendar() {
     let calendarSettingsToSave = {
         calendarType: calendarType,
@@ -1312,60 +1110,43 @@ function saveCalendar() {
         cubeHollidayColor: cubeHollidayColorPicker.value,
         pyramidColor:pyramidColorPicker.value,
     };
+    var settingsString = JSON.stringify(calendarSettingsToSave, null, 2);
 
-    // Convert the settings to a JSON string
-    var settingsString = JSON.stringify(calendarSettingsToSave, null, 2); // The third argument (2) adds indentation for readability
-
-    // Create a Blob containing the JSON data
     var blob = new Blob([settingsString], { type: 'application/json' });
 
-    // Create a download link
     var link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = 'calendar_settings.json';
 
-    // Append the link to the document
     document.body.appendChild(link);
-
-    // Trigger a click on the link to start the download
     link.click();
 
-    // Remove the link from the document
     document.body.removeChild(link);
-
-    console.log('Calendar settings saved to JSON file successfully!');
 }
 
-// Create an input element for loading the calendar settings from a file
 var loadInput = document.createElement('input');
 loadInput.type = 'file';
 loadInput.name = 'nazovInputu';
 loadInput.style.position = 'absolute';
 loadInput.style.top = '10px';
 loadInput.style.left = '28.5rem';
-loadInput.style.fontSize = '0'; // Skryje textový obsah v prehliadačiach
-
+loadInput.style.fontSize = '0';
 loadInput.addEventListener('change', function () {
     loadCalendarSettings(loadInput);
 });
-
-// Append the file input to the document body
 document.body.appendChild(loadInput);
 
-// Create a button element with text "Load"
 var loadButton = document.createElement('button');
 loadButton.textContent = 'Load calendar';
 loadButton.style.position = 'absolute';
 loadButton.style.top = '10px';
 loadButton.style.left = '28.5rem';
-loadButton.style.cursor = 'pointer'; // Zmení kurzor na ruku
+loadButton.style.cursor = 'pointer';
 
-// Add an event listener to the button for triggering the file input
 loadButton.addEventListener('click', function () {
     loadInput.click();
 });
 
-// Append the button to the document body
 document.body.appendChild(loadButton);
 
 function loadCalendarSettings(input) {
@@ -1377,18 +1158,14 @@ function loadCalendarSettings(input) {
             try {
                 var calendarSettings = JSON.parse(e.target.result);
                 updateCalendarSettings(calendarSettings);
-                console.log('Calendar settings loaded successfully!');
             } catch (error) {
                 console.error('Error parsing JSON:', error);
             }
         };
-
         reader.readAsText(file);
     }
 }
 
-
-// Example function to update calendar settings
 function updateCalendarSettings(settings) {
     calendarType = settings.calendarType;
     cubeCol = settings.cubeCol;
