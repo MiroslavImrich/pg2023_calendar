@@ -5,6 +5,8 @@ var currentCalendar;
 var isYearly;
 var fontLoader = new THREE.FontLoader();
 var font;
+var light;
+var material = 'basic';
 
 var calendarType = 'yearly';
 var currentMonth = getCurrentMonth();
@@ -49,14 +51,14 @@ function init() {
     scene.add( sphere );
 }
 
-var cubeColorPicker = createColorPicker('cubeColorPicker', '240px', 'Cube Color:', '#cccccc');
-var cubeHollidayColorPicker = createColorPicker('cubeHollidayColorPicker', '280px', 'Cube Color Holliday:', '#ff0000');
-var pyramidColorPicker = createColorPicker('pyramidColorPicker', '320px', 'Pyramid Color:', '#dddddd');
-var regularDaysColorPicker = createColorPicker('regularDaysColorPicker', '40px', 'Regular Days:', '#000000');
-var specialDaysColorPicker = createColorPicker('specialDaysColorPicker', '80px', 'Special Days:', '#ffffff');
-var dayNamesColorPicker = createColorPicker('dayNamesColorPicker', '120px', 'Day Names:', '#000000');
-var monthNamesColorPicker = createColorPicker('monthNamesColorPicker', '160px', 'Month Names:', '#000000');
-var yearNumberColorPicker = createColorPicker('yearNumberColorPicker', '200px', 'Year number:', '#000000');
+var cubeColorPicker = createColorPicker('cubeColorPicker', '270px', 'Cube Color:', '#cccccc');
+var cubeHollidayColorPicker = createColorPicker('cubeHollidayColorPicker', '310px', 'Cube Color Holliday:', '#ff0000');
+var pyramidColorPicker = createColorPicker('pyramidColorPicker', '350px', 'Pyramid Color:', '#dddddd');
+var regularDaysColorPicker = createColorPicker('regularDaysColorPicker', '70px', 'Regular Days:', '#000000');
+var specialDaysColorPicker = createColorPicker('specialDaysColorPicker', '110px', 'Special Days:', '#ffffff');
+var dayNamesColorPicker = createColorPicker('dayNamesColorPicker', '150px', 'Day Names:', '#000000');
+var monthNamesColorPicker = createColorPicker('monthNamesColorPicker', '190px', 'Month Names:', '#000000');
+var yearNumberColorPicker = createColorPicker('yearNumberColorPicker', '230px', 'Year number:', '#000000');
 
 let cubeCol = '#cccccc';
 let cubeHollidayCol = '#ff0000';
@@ -65,21 +67,7 @@ let specialDaysCol = '#ffffff';
 let dayNamesCol = '#000000';
 let monthNamesCol = '#000000';
 let yearNumberCol = '#000000';
-
-let calendarSettings = {
-    calendarType: calendarType,
-    cubeCol: cubeCol,
-    cubeHollidayCol: cubeHollidayCol,
-    regularDaysCol: regularDaysCol,
-    specialDaysCol: specialDaysCol,
-    dayNamesCol: dayNamesCol,
-    monthNamesCol: monthNamesCol,
-    yearNumberCol: yearNumberCol,
-    currentMonth: currentMonth,
-    currentYear: currentYear,
-    currentDay: currentDay,
-    currentWeek: currentWeek
-};
+let pyramidCol = '#dddddd';
 
 document.body.appendChild(cubeColorPicker);
 document.body.appendChild(cubeHollidayColorPicker);
@@ -127,6 +115,7 @@ function createColorPicker(id, position, labelText, defaultColor) {
 
 function updatePyramidColor() {
     var newColor = pyramidColorPicker.value;
+    pyramidCol = newColor;
 
     prismMesh.material[0].color.set(colorToThreeJSColor(newColor));
 }
@@ -252,7 +241,7 @@ function addObjects() {
     var geometryPrism = new THREE.CylinderGeometry(1.4, 1.4, 3, 3);
 
     var materialOuter = new THREE.MeshBasicMaterial({
-        color: 0xdddddd,
+        color: pyramidCol,
         side: THREE.DoubleSide
     });
 
@@ -535,10 +524,8 @@ function createWeeklyCalendar(year, month, day, isWeeklyObject) {
 
     for (var dayNumber = 1; dayNumber <= 7; dayNumber++) {
         var col = dayNumber - 1;
-        var firstDayOfWeek = createFirstDayOfWeek(currentDayNumber,day,dayNumber);
-        var cube;
-        cube = createDayCube(0.88, -(dayNumber * 0.25) + 0.4, 0.07, firstDayOfWeek, month, (col + 1) % 7, year, true);
-        calendar.add(cube);
+        var firstDayOfWeek = createFirstDayOfWeek(currentDayNumber, day, dayNumber);
+        var cube = createDayCube(0.88, -(dayNumber * 0.25) + 0.4, 0.07, firstDayOfWeek, month, (col + 1) % 7, year, true);
 
         var textGeometry = new THREE.TextGeometry(rearrangedDaysOfWeek[col], {
             font: font,
@@ -548,13 +535,62 @@ function createWeeklyCalendar(year, month, day, isWeeklyObject) {
 
         var textMaterial = new THREE.MeshBasicMaterial({ color: dayNamesCol });
         var textMesh = new THREE.Mesh(textGeometry, textMaterial);
-        textMesh.position.set(1.03, -(dayNumber * 0.25) + 0.4, 0.1);
+        textMesh.position.x = 0.15;
         textMesh.userData.isDayName = true;
-        calendar.add(textMesh);
+
+        cube.add(textMesh);
+
+        cube.userData.isClickable = true;
+        textMesh.userData.isClickable = true;
+        if(cube.userData.day === new Date().getDate() && cube.userData.month === new Date().getMonth()){
+            cube.material.color.set('#0cd5d8');
+            cube.position.z += 0.1;
+        }
+        calendar.add(cube);
     }
 
     circle1 = createClickableCircle(1, false, isWeeklyObject);
     circle2 = createClickableCircle(0, false, isWeeklyObject);
+
+    var clickedObject = null;
+    var originalPosition = null;
+    var currentColor = null;
+
+
+    document.addEventListener('click', function (event) {
+        var mouse = new THREE.Vector2();
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        var raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, camera);
+
+        var intersects = raycaster.intersectObjects(calendar.children, true);
+
+        for (var i = 0; i < intersects.length; i++) {
+            var object = intersects[i].object;
+
+            if (object.userData.isClickable && object.type === "Mesh") {
+                var cube = object;
+                if (clickedObject && clickedObject !== cube) {
+                    clickedObject.material.color.set(currentColor);
+                    clickedObject.position.z = originalPosition;
+                }
+                if (clickedObject === cube) {
+                    // clickedObject = null;
+                } else {
+                    originalPosition = cube.position.z;
+                    currentColor = cube.material.color.getHexString();
+                    currentColor = '#'+ currentColor;
+
+                    cube.position.z += 0.1;
+                    cube.material.color.set('#ffff00');
+                    clickedObject = cube;
+                }
+            }
+        }
+    });
+
 
     return calendar;
 }
@@ -648,6 +684,11 @@ function createMonthlyCalendar(year, month, isYearlyObject) {
         else {
             cube = createDayCube(col * 0.3, -row * 0.3, 0.07, day,month,(day + firstDayOfMonth) % 7, year,false);
         }
+        cube.userData.isClickable = true;
+        if(cube.userData.day === new Date().getDate() && cube.userData.month === new Date().getMonth()){
+            cube.material.color.set('#0cd5d8');
+            cube.position.z += 0.1;
+        }
         calendar.add(cube);
     }
 
@@ -655,6 +696,48 @@ function createMonthlyCalendar(year, month, isYearlyObject) {
         circle1 = createClickableCircle(1,isYearlyObject,false);
         circle2 = createClickableCircle(0,isYearlyObject,false);
     }
+
+    var clickedObject = null;
+    var originalPosition = null;
+    var currentColor = null;
+
+
+    document.addEventListener('click', function (event) {
+        var mouse = new THREE.Vector2();
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        var raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, camera);
+
+        var intersects = raycaster.intersectObjects(calendar.children, true);
+
+        for (var i = 0; i < intersects.length; i++) {
+            var object = intersects[i].object;
+
+            if (object.userData.isClickable && object.type === "Mesh") {
+                var cube = object;
+                if (clickedObject && clickedObject !== cube) {
+                    clickedObject.material.color.set(currentColor);
+                    clickedObject.position.z = originalPosition;
+                }
+                if (clickedObject === cube) {
+                    // clickedObject = null;
+                } else {
+                    originalPosition = cube.position.z;
+                    currentColor = cube.material.color.getHexString();
+                    currentColor = '#'+ currentColor;
+
+                    cube.position.z += 0.1;
+                    cube.material.color.set('#ffff00');
+                    clickedObject = cube;
+                }
+
+            }
+        }
+    });
+
+
     return calendar;
 }
 
@@ -673,6 +756,7 @@ function isHoliday(day, month) {
 
 function createYearlyCalendar(year) {
     var yearlyCalendar = new THREE.Object3D();
+    var selectedDay = null;
 
     var calendarsInRow = 4;
     var calendarSpacing = 0.2;
@@ -684,6 +768,24 @@ function createYearlyCalendar(year) {
         var row = Math.floor(month / calendarsInRow);
         var col = month % calendarsInRow;
         calendar.position.set(col * (calendarSpacing + 0.25), -row * (calendarSpacing + 0.4), 0);
+
+        calendar.userData.month = month;
+        calendar.userData.year = year;
+
+        calendar.children.forEach(function (dayCube) {
+            dayCube.addEventListener('click', function (event) {
+                if (selectedDay) {
+                    selectedDay.position.z -= 0.1;
+                    selectedDay.material.color.set(selectedDay.userData.originalColor);
+                    selectedDay = null;
+                }
+
+                selectedDay = event.target;
+                selectedDay.position.z += 0.1;
+                selectedDay.userData.originalColor = selectedDay.material.color.clone();
+                selectedDay.material.color.set('#ffff00');
+            });
+        });
 
         yearlyCalendar.add(calendar);
     }
@@ -702,10 +804,9 @@ function createYearlyCalendar(year) {
     yearMesh.position.set(0.75, 0.45, 0.04);
     yearMesh.userData.isYearNumber = true;
     yearlyCalendar.add(yearMesh);
-    circle1 = createClickableCircle(1,true,false);
-    circle2 = createClickableCircle(0,true,false);
 
-
+    circle1 = createClickableCircle(1, true, false);
+    circle2 = createClickableCircle(0, true, false);
 
     return yearlyCalendar;
 }
@@ -1097,6 +1198,7 @@ function saveCalendar() {
         dayNamesCol: dayNamesCol,
         monthNamesCol: monthNamesCol,
         yearNumberCol: yearNumberCol,
+        pyramidCol: pyramidCol,
         currentMonth: currentMonth,
         currentYear: currentYear,
         currentDay: currentDay,
@@ -1109,6 +1211,7 @@ function saveCalendar() {
         yearNumberColor: yearNumberColorPicker.value,
         cubeHollidayColor: cubeHollidayColorPicker.value,
         pyramidColor:pyramidColorPicker.value,
+        material: material
     };
     var settingsString = JSON.stringify(calendarSettingsToSave, null, 2);
 
@@ -1175,16 +1278,187 @@ function updateCalendarSettings(settings) {
     dayNamesCol = settings.dayNamesCol;
     monthNamesCol = settings.monthNamesCol;
     yearNumberCol = settings.yearNumberCol;
+    pyramidCol = settings.pyramidColor;
     currentMonth = settings.currentMonth;
     currentYear = settings.currentYear;
     currentDay = settings.currentDay;
     currentWeek = settings.currentWeek;
-    cubeColorPicker.value = settings.cubeColor;
+    cubeColorPicker.value = settings.cubeColor
     regularDaysColorPicker.value = settings.regularDaysColor;
     specialDaysColorPicker.value = settings.specialDaysColor;
     monthNamesColorPicker.value = settings.monthNamesColor;
     yearNumberColorPicker.value = settings.yearNumberColor;
     cubeHollidayColorPicker.value = settings.cubeHollidayColor;
     pyramidColorPicker.value = settings.pyramidColor;
+    material = settings.material
+    updatePyramidColor();
+    if( material === 'basic' ) {
+        changeToBasicMaterial();
+    }
+    else if( material === 'lambert' ) {
+        changeToLambertMaterial();
+    }
+    else if( material === 'phong' ) {
+        changeToPhongMaterial();
+    }
     toggleCalendarView(calendarType);
+}
+
+var materialDropdown = document.createElement('select');
+materialDropdown.style.position = 'absolute';
+materialDropdown.style.top = '30px';
+materialDropdown.style.left = '0.5rem';
+materialDropdown.style.width = '10rem';
+materialDropdown.style.height = '1.3rem';
+
+var basicOption = document.createElement('option');
+basicOption.text = 'Basic material';
+basicOption.value = 'basic';
+materialDropdown.add(basicOption);
+
+var lambertOption = document.createElement('option');
+lambertOption.text = 'Lambert material';
+lambertOption.value = 'lambert';
+materialDropdown.add(lambertOption);
+
+var phongOption = document.createElement('option');
+phongOption.text = 'Phong material';
+phongOption.value = 'phong';
+materialDropdown.add(phongOption);
+
+document.body.appendChild(materialDropdown);
+
+materialDropdown.addEventListener('change', function () {
+    if (!debounceTimeout) {
+
+        if (materialDropdown.value === 'basic') {
+            material = 'basic';
+            changeToBasicMaterial();
+        }
+        else if(materialDropdown.value === 'lambert') {
+            material = 'lambert';
+            changeToLambertMaterial();
+        }
+        else if(materialDropdown.value === 'phong'){
+            material = 'phong';
+            changeToPhongMaterial();
+        }
+
+        debounceTimeout = setTimeout(function () {
+            debounceTimeout = null;
+        }, 1000);
+    }
+});
+
+function changeToBasicMaterial() {
+    scene.remove(light);
+    scene.remove(group);
+    group = new THREE.Group();
+
+    var geometryPrism = new THREE.CylinderGeometry(1.4, 1.4, 3, 3);
+
+    var materialOuter = new THREE.MeshBasicMaterial({
+        color: pyramidColorPicker.value,
+        side: THREE.DoubleSide
+    });
+
+    var materialInner = new THREE.MeshBasicMaterial({
+        visible: false
+    });
+
+    geometryPrism.faceVertexUvs[0] = [];
+    geometryPrism.faceVertexUvs[0].push([
+        new THREE.Vector2(0, 0),
+        new THREE.Vector2(1, 0),
+        new THREE.Vector2(0, 1)
+    ]);
+
+    prismMesh = new THREE.Mesh(geometryPrism, [materialOuter, materialInner]);
+    prismMesh.position.set(0, 0.2, 0);
+    prismMesh.rotation.x = -Math.PI / 2;
+    group.add(prismMesh);
+
+    currentCalendar = createYearlyCalendar(currentYear);
+    positionCalendarOnFace(currentCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
+    group.add(currentCalendar);
+
+    scene.add(group);
+}
+
+function changeToLambertMaterial() {
+    scene.remove(light);
+    scene.remove(group);
+    group = new THREE.Group();
+
+    var geometryPrism = new THREE.CylinderGeometry(1.4, 1.4, 3, 3);
+
+    var materialOuter = new THREE.MeshLambertMaterial({
+        color: pyramidColorPicker.value,
+        side: THREE.DoubleSide
+    });
+
+    var materialInner = new THREE.MeshLambertMaterial({
+        visible: false
+    });
+
+    geometryPrism.faceVertexUvs[0] = [];
+    geometryPrism.faceVertexUvs[0].push([
+        new THREE.Vector2(0, 0),
+        new THREE.Vector2(1, 0),
+        new THREE.Vector2(0, 1)
+    ]);
+
+    prismMesh = new THREE.Mesh(geometryPrism, [materialOuter, materialInner]);
+    prismMesh.position.set(0, 0.2, 0);
+    prismMesh.rotation.x = -Math.PI / 2;
+    group.add(prismMesh);
+
+    currentCalendar = createYearlyCalendar(currentYear);
+    positionCalendarOnFace(currentCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
+    group.add(currentCalendar);
+
+    light = new THREE.DirectionalLight( 0xffffff );
+    light.position.set( 2, 0.5, 0 ).normalize();
+    scene.add(light);
+
+    scene.add(group);
+}
+
+function changeToPhongMaterial() {
+    scene.remove(light);
+    scene.remove(group);
+    group = new THREE.Group();
+
+    var geometryPrism = new THREE.CylinderGeometry(1.4, 1.4, 3, 3);
+
+    var materialOuter = new THREE.MeshPhongMaterial({
+        color: pyramidColorPicker.value,
+        side: THREE.DoubleSide
+    });
+
+    var materialInner = new THREE.MeshPhongMaterial({
+        visible: false
+    });
+
+    geometryPrism.faceVertexUvs[0] = [];
+    geometryPrism.faceVertexUvs[0].push([
+        new THREE.Vector2(0, 0),
+        new THREE.Vector2(1, 0),
+        new THREE.Vector2(0, 1)
+    ]);
+
+    prismMesh = new THREE.Mesh(geometryPrism, [materialOuter, materialInner]);
+    prismMesh.position.set(0, 0.2, 0);
+    prismMesh.rotation.x = -Math.PI / 2;
+    group.add(prismMesh);
+
+    currentCalendar = createYearlyCalendar(currentYear);
+    positionCalendarOnFace(currentCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
+    group.add(currentCalendar);
+
+    light = new THREE.DirectionalLight( 0xffffff );
+    light.position.set( 2, 0.5, 0 ).normalize();
+    scene.add(light);
+
+    scene.add(group);
 }
