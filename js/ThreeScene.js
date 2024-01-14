@@ -1116,6 +1116,7 @@ function getISOWeeksInYear(year) {
             return 52;
         }
     }
+
     return week;
 }
 
