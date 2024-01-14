@@ -542,7 +542,7 @@ function createWeeklyCalendar(year, month, day, isWeeklyObject) {
 
         cube.userData.isClickable = true;
         textMesh.userData.isClickable = true;
-        if(cube.userData.day === new Date().getDate() && cube.userData.month === new Date().getMonth()){
+        if(cube.userData.day === new Date().getDate() && cube.userData.month === new Date().getMonth() && year === new Date().getFullYear()){
             cube.material.color.set('#0cd5d8');
             cube.position.z += 0.1;
         }
@@ -577,7 +577,9 @@ function createWeeklyCalendar(year, month, day, isWeeklyObject) {
                     clickedObject.position.z = originalPosition;
                 }
                 if (clickedObject === cube) {
-                    // clickedObject = null;
+                    clickedObject.material.color.set(currentColor);
+                    clickedObject.position.z = originalPosition;
+                    clickedObject = null;
                 } else {
                     originalPosition = cube.position.z;
                     currentColor = cube.material.color.getHexString();
@@ -605,7 +607,7 @@ function getWeekNumber(d) {
     return weekNo;
 }
 
-function createMonthlyCalendar(year, month, isYearlyObject) {
+function createMonthlyCalendar(year, month, isYearlyObject, elementForYearlyCalendar) {
     var calendar = new THREE.Object3D();
     var daysInMonth = new Date(year, month + 1, 0).getDate();
     var daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -685,9 +687,10 @@ function createMonthlyCalendar(year, month, isYearlyObject) {
             cube = createDayCube(col * 0.3, -row * 0.3, 0.07, day,month,(day + firstDayOfMonth) % 7, year,false);
         }
         cube.userData.isClickable = true;
-        if(cube.userData.day === new Date().getDate() && cube.userData.month === new Date().getMonth()){
+        if(cube.userData.day === new Date().getDate() && cube.userData.month === new Date().getMonth() && year === new Date().getFullYear()){
             cube.material.color.set('#0cd5d8');
             cube.position.z += 0.1;
+
         }
         calendar.add(cube);
     }
@@ -701,43 +704,46 @@ function createMonthlyCalendar(year, month, isYearlyObject) {
     var originalPosition = null;
     var currentColor = null;
 
+    if (elementForYearlyCalendar === true) {
+        document.addEventListener('click', function (event) {
+            var mouse = new THREE.Vector2();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-    document.addEventListener('click', function (event) {
-        var mouse = new THREE.Vector2();
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            var raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
 
-        var raycaster = new THREE.Raycaster();
-        raycaster.setFromCamera(mouse, camera);
+            var intersects = raycaster.intersectObjects(calendar.children, true);
 
-        var intersects = raycaster.intersectObjects(calendar.children, true);
+            for (var i = 0; i < intersects.length; i++) {
+                var object = intersects[i].object;
 
-        for (var i = 0; i < intersects.length; i++) {
-            var object = intersects[i].object;
+                if (object.userData.isClickable && object.type === "Mesh") {
+                    var cube = object;
+                    if (clickedObject && clickedObject !== cube) {
+                        clickedObject.material.color.set(currentColor);
+                        clickedObject.position.z = originalPosition;
+                    }
+                    if (clickedObject === cube) {
+                        clickedObject.material.color.set(currentColor);
+                        clickedObject.position.z = originalPosition;
+                        clickedObject = null;
 
-            if (object.userData.isClickable && object.type === "Mesh") {
-                var cube = object;
-                if (clickedObject && clickedObject !== cube) {
-                    clickedObject.material.color.set(currentColor);
-                    clickedObject.position.z = originalPosition;
+                    } else {
+                        originalPosition = cube.position.z;
+                        currentColor = cube.material.color.getHexString();
+                        currentColor = '#' + currentColor;
+
+                        cube.position.z += 0.1;
+                        cube.material.color.set('#ffff00');
+                        clickedObject = cube;
+                    }
+
                 }
-                if (clickedObject === cube) {
-                    // clickedObject = null;
-                } else {
-                    originalPosition = cube.position.z;
-                    currentColor = cube.material.color.getHexString();
-                    currentColor = '#'+ currentColor;
-
-                    cube.position.z += 0.1;
-                    cube.material.color.set('#ffff00');
-                    clickedObject = cube;
-                }
-
             }
-        }
-    });
+        });
 
-
+    }
     return calendar;
 }
 
@@ -762,7 +768,7 @@ function createYearlyCalendar(year) {
     var calendarSpacing = 0.2;
 
     for (var month = 0; month < 12; month++) {
-        var calendar = createMonthlyCalendar(year, month, true);
+        var calendar = createMonthlyCalendar(year, month, true, false);
 
         calendar.scale.set(0.5, 0.5, 0.5);
         var row = Math.floor(month / calendarsInRow);
@@ -771,21 +777,6 @@ function createYearlyCalendar(year) {
 
         calendar.userData.month = month;
         calendar.userData.year = year;
-
-        calendar.children.forEach(function (dayCube) {
-            dayCube.addEventListener('click', function (event) {
-                if (selectedDay) {
-                    selectedDay.position.z -= 0.1;
-                    selectedDay.material.color.set(selectedDay.userData.originalColor);
-                    selectedDay = null;
-                }
-
-                selectedDay = event.target;
-                selectedDay.position.z += 0.1;
-                selectedDay.userData.originalColor = selectedDay.material.color.clone();
-                selectedDay.material.color.set('#ffff00');
-            });
-        });
 
         yearlyCalendar.add(calendar);
     }
@@ -807,6 +798,48 @@ function createYearlyCalendar(year) {
 
     circle1 = createClickableCircle(1, true, false);
     circle2 = createClickableCircle(0, true, false);
+
+    var clickedObject = null;
+    var originalPosition = null;
+    var currentColor = null;
+
+    document.addEventListener('click', function (event) {
+        var mouse = new THREE.Vector2();
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        var raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, camera);
+
+        var intersects = raycaster.intersectObjects(yearlyCalendar.children, true);
+
+        for (var i = 0; i < intersects.length; i++) {
+            var object = intersects[i].object;
+
+            if (object.userData.isClickable && object.type === "Mesh") {
+                var cube = object;
+                if (clickedObject && clickedObject !== cube) {
+                    clickedObject.material.color.set(currentColor);
+                    clickedObject.position.z = originalPosition;
+                }
+                if (clickedObject === cube) {
+                    clickedObject.material.color.set(currentColor);
+                    clickedObject.position.z = originalPosition;
+                    clickedObject = null;
+
+                } else {
+                    originalPosition = cube.position.z;
+                    currentColor = cube.material.color.getHexString();
+                    currentColor = '#' + currentColor;
+
+                    cube.position.z += 0.1;
+                    cube.material.color.set('#ffff00');
+                    clickedObject = cube;
+                }
+
+            }
+        }
+    });
 
     return yearlyCalendar;
 }
@@ -972,7 +1005,7 @@ function toggleCalendarView(type) {
     scene.remove(circle2);
 
     if (type === "monthly") {
-        currentCalendar = createMonthlyCalendar(currentYear, currentMonth, false);
+        currentCalendar = createMonthlyCalendar(currentYear, currentMonth, false, true);
         positionCalendarOnFace(currentCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
     } else if (type === "yearly") {
         currentCalendar = createYearlyCalendar(currentYear);
@@ -1106,7 +1139,7 @@ function changeMonth(delta) {
 
     group.remove(currentCalendar);
 
-    var newCalendar = createMonthlyCalendar(currentYear, currentMonth, false);
+    var newCalendar = createMonthlyCalendar(currentYear, currentMonth, false, true);
     positionCalendarOnFace(newCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
     newCalendar.name = "calendar_" + currentMonth;
     group.add(newCalendar);
@@ -1306,7 +1339,7 @@ function updateCalendarSettings(settings) {
 
 var materialDropdown = document.createElement('select');
 materialDropdown.style.position = 'absolute';
-materialDropdown.style.top = '30px';
+materialDropdown.style.top = '40px';
 materialDropdown.style.left = '0.5rem';
 materialDropdown.style.width = '10rem';
 materialDropdown.style.height = '1.3rem';
@@ -1378,10 +1411,19 @@ function changeToBasicMaterial() {
     prismMesh.rotation.x = -Math.PI / 2;
     group.add(prismMesh);
 
-    currentCalendar = createYearlyCalendar(currentYear);
+    if(calendarType === "yearly"){
+        currentCalendar = createYearlyCalendar(currentYear);
+
+
+    }else if(calendarType === "monthly" ){
+        currentCalendar = createMonthlyCalendar(currentYear, currentMonth, false, true);
+    }else {
+        currentCalendar = createWeeklyCalendar(currentYear,currentMonth,currentDay,true);
+
+    }
+
     positionCalendarOnFace(currentCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
     group.add(currentCalendar);
-
     scene.add(group);
 }
 
@@ -1413,7 +1455,16 @@ function changeToLambertMaterial() {
     prismMesh.rotation.x = -Math.PI / 2;
     group.add(prismMesh);
 
-    currentCalendar = createYearlyCalendar(currentYear);
+    if(calendarType === "yearly"){
+        currentCalendar = createYearlyCalendar(currentYear);
+
+
+    }else if(calendarType === "monthly" ){
+        currentCalendar = createMonthlyCalendar(currentYear, currentMonth, false, true);
+    }else {
+        currentCalendar = createWeeklyCalendar(currentYear,currentMonth,currentDay,true);
+
+    }
     positionCalendarOnFace(currentCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
     group.add(currentCalendar);
 
@@ -1452,7 +1503,16 @@ function changeToPhongMaterial() {
     prismMesh.rotation.x = -Math.PI / 2;
     group.add(prismMesh);
 
-    currentCalendar = createYearlyCalendar(currentYear);
+    if(calendarType === "yearly"){
+        currentCalendar = createYearlyCalendar(currentYear);
+
+
+    }else if(calendarType === "monthly" ){
+        currentCalendar = createMonthlyCalendar(currentYear, currentMonth, false, true);
+    }else {
+        currentCalendar = createWeeklyCalendar(currentYear,currentMonth,currentDay,true);
+
+    }
     positionCalendarOnFace(currentCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
     group.add(currentCalendar);
 
