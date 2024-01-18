@@ -7,7 +7,6 @@ import {
     yearNumberColorPicker,
     monthNamesColorPicker,
     regularDaysColorPicker,
-    // cubeCol,
     colorToThreeJSColor,
     updateCubeColor,
     updatePyramidColor,
@@ -42,7 +41,6 @@ export var isYearly;
 export var fontLoader = new THREE.FontLoader();
 export  var font;
 export  var light;
-// export  var material = 'basic';
 
 export var calendarType = 'yearly';
 export var currentMonth = getCurrentMonth();
@@ -60,7 +58,6 @@ fontLoader.load('./js/font/droid_sans_regular.typeface.json', function (loadedFo
     render();
 });
 
-
 function init() {
     camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000);
     camera.position.set(5, 5, 5);
@@ -70,7 +67,6 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     scene = new THREE.Scene();
-
     addObjects();
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -104,6 +100,34 @@ document.body.appendChild(dayNamesColorPicker);
 document.body.appendChild(regularDaysColorPicker);
 document.body.appendChild(specialDaysColorPicker);
 document.body.appendChild(monthNamesColorPicker);
+
+export function setCubeCol(newCol){
+    cubeCol = newCol;
+}
+
+export function setPyramidCol(newCol){
+    pyramidCol = newCol;
+}
+export function setCubeHollidayCol(newCol){
+    cubeHollidayCol = newCol;
+}
+
+export function setRegularDaysCol(newCol){
+    regularDaysCol = newCol;
+}
+
+export function setSpecialDaysCol(newCol){
+    specialDaysCol = newCol;
+}
+export function setDayNamesCol(newCol){
+    dayNamesCol = newCol;
+}
+export function setMonthNamesCol(newCol){
+    monthNamesCol = newCol;
+}
+export function setYearNumberCol(newCol){
+    yearNumberCol = newCol;
+}
 
 function render() {
     requestAnimationFrame(render);
@@ -700,7 +724,6 @@ export function toggleCalendarView(type) {
     group.add(currentCalendar);
 }
 
-
 function changeWeek(delta) {
     var currentDate = new Date(currentYear, currentMonth, currentDay);
     var currentDayNumber =  currentDate.getDay();
@@ -740,7 +763,6 @@ function changeWeek(delta) {
     }
     else{
         if(currentDay-7 < 1){
-
             if(currentMonth-1<0){
                 currentYear -= 1;
                 currentMonth = 11;
@@ -794,9 +816,7 @@ function changeMonth(delta) {
         currentMonth = 0;
         currentYear = currentYear + 1;
     }
-
     group.remove(currentCalendar);
-
     var newCalendar = createMonthlyCalendar(currentYear, currentMonth, false, true);
     positionCalendarOnFace(newCalendar, prismMesh, Math.PI / 2, -Math.PI / 6, 0.33, 0.75, -0.62);
     newCalendar.name = "calendar_" + currentMonth;

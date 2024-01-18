@@ -1,5 +1,5 @@
 import { isHoliday } from './Helpers.js';
-import { group, prismMesh } from './ThreeScene.js';
+import { group, prismMesh, setCubeCol, setCubeHollidayCol, setMonthNamesCol, setSpecialDaysCol, setDayNamesCol, setPyramidCol, setRegularDaysCol, setYearNumberCol } from './ThreeScene.js';
 
 export var cubeColorPicker = createColorPicker('cubeColorPicker', '270px', 'Cube Color:', '#cccccc');
 export var cubeHollidayColorPicker = createColorPicker('cubeHollidayColorPicker', '310px', 'Cube Color Holliday:', '#ff0000');
@@ -9,15 +9,6 @@ export var specialDaysColorPicker = createColorPicker('specialDaysColorPicker', 
 export var dayNamesColorPicker = createColorPicker('dayNamesColorPicker', '150px', 'Day Names:', '#000000');
 export var monthNamesColorPicker = createColorPicker('monthNamesColorPicker', '190px', 'Month Names:', '#000000');
 export var yearNumberColorPicker = createColorPicker('yearNumberColorPicker', '230px', 'Year number:', '#000000');
-
-export let cubeCol = '#cccccc';
-export let pyramidCol = '#dddddd';
-export let cubeHollidayCol = '#ff0000';
-export let regularDaysCol = '#000000';
-export let specialDaysCol = '#ffffff';
-export let dayNamesCol = '#000000';
-export let monthNamesCol = '#000000';
-export let yearNumberCol = '#000000';
 
 cubeColorPicker.addEventListener('input', updateCubeColor);
 regularDaysColorPicker.addEventListener('input', updateRegularDaysColor);
@@ -60,14 +51,15 @@ export function colorToThreeJSColor(hexColor) {
 
 export function updatePyramidColor() {
     var newColor = pyramidColorPicker.value;
-    pyramidCol = newColor;
+    setPyramidCol(newColor)
 
     prismMesh.material[0].color.set(colorToThreeJSColor(newColor));
 }
 
 export function updateCubeColor() {
     var newColor = cubeColorPicker.value;
-    cubeCol = newColor;
+    // cubeCol = newColor;
+    setCubeCol(newColor);
 
     group.traverse(function (child) {
         if (child instanceof THREE.Mesh) {
@@ -85,7 +77,7 @@ export function updateCubeColor() {
 
 export function updateDayNamesColor() {
     var newColor = dayNamesColorPicker.value;
-    dayNamesCol = newColor;
+    setDayNamesCol(newColor);
 
     group.traverse(function (child) {
         if (child instanceof THREE.Mesh && child.userData.isDayName) {
@@ -95,7 +87,7 @@ export function updateDayNamesColor() {
 }
 export function updateYearNumberColor() {
     var newColor = yearNumberColorPicker.value;
-    yearNumberCol = newColor;
+    setYearNumberCol(newColor);
 
     group.traverse(function (child) {
         if (child instanceof THREE.Mesh && child.userData.isYearNumber) {
@@ -105,7 +97,7 @@ export function updateYearNumberColor() {
 }
 export function updateMonthNamesColor() {
     var newColor = monthNamesColorPicker.value;
-    monthNamesCol = newColor;
+    setMonthNamesCol(newColor);
 
     group.traverse(function (child) {
         if (child instanceof THREE.Mesh && child.userData.isMonthName) {
@@ -124,7 +116,7 @@ export function updateSpecialDaysColor() {
 
 export function updateHollidayCubeColor() {
     var newColor = cubeHollidayColorPicker.value;
-    cubeHollidayCol = newColor;
+    setCubeHollidayCol(newColor);
 
     group.traverse(function (child) {
         if (child instanceof THREE.Mesh) {
@@ -143,10 +135,10 @@ export function updateHollidayCubeColor() {
 function updateColorForDays(colorPicker, includeHolidays = false, includeSundays = false, includeRegularDays = false) {
     var newColor = colorPicker.value;
     if(includeHolidays === true){
-        specialDaysCol = newColor;
+        setSpecialDaysCol(newColor)
     }
     if(includeHolidays === false && includeSundays === false){
-        regularDaysCol = newColor;
+        setRegularDaysCol(newColor);
     }
 
     group.traverse(function (child) {
