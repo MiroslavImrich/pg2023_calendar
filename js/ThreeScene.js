@@ -354,7 +354,12 @@ export function createWeeklyCalendar(year, month, day, isWeeklyObject) {
     var weekNumber = getWeekNumber(currentDate);
     var currentDayNumber =  currentDate.getDay();
 
-    weekYearText = getMonthName(month) + ' ' + 'Week ' + weekNumber + ', ' + year;
+    if(weekNumber===1){
+        weekYearText = getMonthName(0) + ' ' + 'Week ' + weekNumber + ', ' + year;
+    }
+    else {
+        weekYearText = getMonthName(month) + ' ' + 'Week ' + weekNumber + ', ' + year;
+    }
     weekYearGeometry = new THREE.TextGeometry(weekYearText, {
         font: font,
         size: 0.1,

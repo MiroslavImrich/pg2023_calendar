@@ -58,7 +58,6 @@ export function updatePyramidColor() {
 
 export function updateCubeColor() {
     var newColor = cubeColorPicker.value;
-    // cubeCol = newColor;
     setCubeCol(newColor);
 
     group.traverse(function (child) {
